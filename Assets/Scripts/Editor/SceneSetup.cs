@@ -30,11 +30,9 @@ public class SceneSetup : EditorWindow
         evaluator.rubricConfig = rubricConfig;
         evaluator.ollamaClient = ollamaClient;
         ollamaClient.rubricConfig = rubricConfig;
-        ollamaClient.polygonCounter = polygonCounter;
-        ollamaClient.evaluator = evaluator;
 
         // 2. Crear Canvas i EventSystem
-        Canvas canvas = Object.FindObjectOfType<Canvas>();
+        Canvas canvas = Object.FindAnyObjectByType<Canvas>();
         GameObject canvasObj;
         if (canvas == null)
         {
@@ -49,7 +47,7 @@ public class SceneSetup : EditorWindow
             canvasObj = canvas.gameObject;
         }
 
-        if (Object.FindObjectOfType<UnityEngine.EventSystems.EventSystem>() == null)
+        if (Object.FindAnyObjectByType<UnityEngine.EventSystems.EventSystem>() == null)
         {
             GameObject eventSystemObj = new GameObject("EventSystem");
             eventSystemObj.AddComponent<UnityEngine.EventSystems.EventSystem>();
