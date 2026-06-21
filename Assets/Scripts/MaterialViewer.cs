@@ -25,6 +25,7 @@ public class MaterialViewer : MonoBehaviour
     private bool isVertexColorMode = false;
 
     private List<GameObject> wireframeObjects = new List<GameObject>();
+    private Material wireframeMaterial;
     private Material checkerboardMaterial;
     private bool isUvMode = false;
 
@@ -38,9 +39,6 @@ public class MaterialViewer : MonoBehaviour
         
         foreach(var w in wireframeObjects) if(w!=null) Destroy(w);
         wireframeObjects.Clear();
-
-        foreach(var u in uvLayoutObjects) if(u!=null) Destroy(u);
-        uvLayoutObjects.Clear();
 
         wireframeMaterial = new Material(Shader.Find("Universal Render Pipeline/Unlit"));
         if (wireframeMaterial != null) wireframeMaterial.color = Color.cyan;
