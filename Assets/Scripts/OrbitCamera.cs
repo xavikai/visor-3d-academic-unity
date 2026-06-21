@@ -24,6 +24,8 @@ public class OrbitCamera : MonoBehaviour
     private Vector3 currentPan;
     private Vector3 targetPan;
 
+    private bool isInteractingWithUI = false;
+
     void Start()
     {
         Vector3 angles = transform.eulerAngles;
@@ -47,6 +49,21 @@ public class OrbitCamera : MonoBehaviour
     {
         if (target != null && Mouse.current != null)
         {
+            // Detectar si estem iniciant el clic sobre la UI
+            if (Mouse.current.leftButton.wasPressedThisFrame || Mouse.current.rightButton.wasPressedThisFrame || Mouse.current.middleButton.wasPressedThisFrame)
+            {
+                if (UnityEngine.EventSystems.EventSystem.current != null && UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject())
+                {
+                    isInteractingWithUI = true;
+                }
+            }
+
+            // Resetejar quan no es clica res
+            if (!Mouse.current.leftButton.isPressed && !Mouse.current.rightButton.isPressed && !Mouse.current.middleButton.isPressed)
+            {
+                isInteractingWithUI = false;
+            }
+
             // Tecla F per centrar (Focus)
             if (Keyboard.current != null && Keyboard.current.fKey.wasPressedThisFrame)
             {
@@ -55,37 +72,40 @@ public class OrbitCamera : MonoBehaviour
             }
 
             Vector2 delta = Mouse.current.delta.ReadValue();
-
-            // Rotació (Clic esquerre)
-            if (Mouse.current.leftButton.isPressed)
-            {
-                targetX += delta.x * rotationSensitivity;
-                targetY -= delta.y * rotationSensitivity;
-                targetY = Mathf.Clamp(targetY, -85f, 85f);
-            }
-            
-            // Pan (Clic dret o central)
-            if (Mouse.current.rightButton.isPressed || Mouse.current.middleButton.isPressed)
-            {
-                Vector3 right = transform.right;
-                Vector3 up = transform.up;
-                
-                // Pan 1:1 matemàticament perfecte
-                float fov = Camera.main != null ? Camera.main.fieldOfView : 60f;
-                float heightAtDistance = 2.0f * currentDistance * Mathf.Tan(fov * 0.5f * Mathf.Deg2Rad);
-                float panSens = heightAtDistance / Screen.height;
-                
-                targetPan -= (right * delta.x + up * delta.y) * panSens;
-            }
-
-            // Zoom (Rodeta)
             Vector2 scroll = Mouse.current.scroll.ReadValue();
-            if (scroll.y != 0)
+
+            if (!isInteractingWithUI)
             {
-                // El zoom s'escala logarítmicament segons la distància perquè sigui precís en objectes minúsculs i ràpid en gegants
-                float adjustedZoomSens = zoomSensitivity * currentDistance * 0.005f;
-                targetDistance -= scroll.y * adjustedZoomSens;
-                targetDistance = Mathf.Clamp(targetDistance, 0.01f, 5000f);
+                // Rotació (Clic esquerre)
+                if (Mouse.current.leftButton.isPressed)
+                {
+                    targetX += delta.x * rotationSensitivity;
+                    targetY -= delta.y * rotationSensitivity;
+                    targetY = Mathf.Clamp(targetY, -85f, 85f);
+                }
+                
+                // Pan (Clic dret o central)
+                if (Mouse.current.rightButton.isPressed || Mouse.current.middleButton.isPressed)
+                {
+                    Vector3 right = transform.right;
+                    Vector3 up = transform.up;
+                    
+                    // Pan 1:1 matemàticament perfecte
+                    float fov = Camera.main != null ? Camera.main.fieldOfView : 60f;
+                    float heightAtDistance = 2.0f * currentDistance * Mathf.Tan(fov * 0.5f * Mathf.Deg2Rad);
+                    float panSens = heightAtDistance / Screen.height;
+                    
+                    targetPan -= (right * delta.x + up * delta.y) * panSens;
+                }
+
+                // Zoom (Rodeta)
+                if (scroll.y != 0)
+                {
+                    // El zoom s'escala logarítmicament segons la distància perquè sigui precís en objectes minúsculs i ràpid en gegants
+                    float adjustedZoomSens = zoomSensitivity * currentDistance * 0.005f;
+                    targetDistance -= scroll.y * adjustedZoomSens;
+                    targetDistance = Mathf.Clamp(targetDistance, 0.01f, 5000f);
+                }
             }
 
             // Aplicar inèrcia (Damping)

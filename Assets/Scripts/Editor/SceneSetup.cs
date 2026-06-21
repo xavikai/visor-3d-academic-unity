@@ -174,11 +174,14 @@ public class SceneSetup : EditorWindow
         Toggle albedoToggle = CreateToggle(controlsPanel.transform, "AlbedoToggle", "Color (Albedo)", new Vector2(0, 150));
         
         Toggle normalToggle = CreateToggle(controlsPanel.transform, "NormalToggle", "Relleu (Normal Map)", new Vector2(0, 100));
-        Slider normalSlider = CreateSlider(controlsPanel.transform, "NormalSlider", new Vector2(70, 75), 0f, 2f, 1f);
+        CreateText(controlsPanel.transform, "LblNormalInt", "Intensitat:", new Vector2(0, 75), new Vector2(100, 20), TextAnchor.MiddleLeft, 14);
+        Slider normalSlider = CreateSlider(controlsPanel.transform, "NormalSlider", new Vector2(90, 75), 0f, 2f, 1f);
         
         Toggle metallicToggle = CreateToggle(controlsPanel.transform, "MetallicToggle", "Metall/Rugositat", new Vector2(0, 20));
-        Slider metallicSlider = CreateSlider(controlsPanel.transform, "MetallicSlider", new Vector2(70, -5), 0f, 1f, 0f);
-        Slider smoothnessSlider = CreateSlider(controlsPanel.transform, "SmoothnessSlider", new Vector2(70, -30), 0f, 1f, 0.5f);
+        CreateText(controlsPanel.transform, "LblMetallic", "Metàl·lic:", new Vector2(0, -5), new Vector2(100, 20), TextAnchor.MiddleLeft, 14);
+        Slider metallicSlider = CreateSlider(controlsPanel.transform, "MetallicSlider", new Vector2(90, -5), 0f, 1f, 0f);
+        CreateText(controlsPanel.transform, "LblSmooth", "Rugositat:", new Vector2(0, -30), new Vector2(100, 20), TextAnchor.MiddleLeft, 14);
+        Slider smoothnessSlider = CreateSlider(controlsPanel.transform, "SmoothnessSlider", new Vector2(90, -30), 0f, 1f, 0.5f);
         
         Toggle wireframeToggle = CreateToggle(controlsPanel.transform, "WireframeToggle", "Malla (Wireframe)", new Vector2(0, -80));
         wireframeToggle.isOn = false;
