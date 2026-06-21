@@ -9,11 +9,28 @@ public class SceneSetup : EditorWindow
     [MenuItem("Visor 3D/1. Generar Escena Automàticament (Standalone)")]
     public static void GenerateScene()
     {
-        // 1. Crear l'objecte ModelLoader
+        // 1. Crear l'objecte ModelLoader i contenidors
         GameObject modelLoaderObj = GameObject.Find("ModelLoader");
         if (modelLoaderObj == null) modelLoaderObj = new GameObject("ModelLoader");
 
+        GameObject highpolyObj = GameObject.Find("HighpolyContainer");
+        if (highpolyObj == null) 
+        {
+            highpolyObj = new GameObject("HighpolyContainer");
+            highpolyObj.transform.SetParent(modelLoaderObj.transform);
+        }
+        
+        GameObject lowpolyObj = GameObject.Find("LowpolyContainer");
+        if (lowpolyObj == null) 
+        {
+            lowpolyObj = new GameObject("LowpolyContainer");
+            lowpolyObj.transform.SetParent(modelLoaderObj.transform);
+        }
+
         var modelLoader = GetOrAddComponent<ModelLoader>(modelLoaderObj);
+        modelLoader.highpolyContainer = highpolyObj;
+        modelLoader.lowpolyContainer = lowpolyObj;
+
         var polygonCounter = GetOrAddComponent<PolygonCounter>(modelLoaderObj);
         var evaluator = GetOrAddComponent<Evaluator>(modelLoaderObj);
         var rubricConfig = GetOrAddComponent<RubricConfig>(modelLoaderObj);
@@ -53,12 +70,45 @@ public class SceneSetup : EditorWindow
         }
 
         // Esborrar panells antics si existeixen per regenerar-los bé
+        Transform oldStudent = canvasObj.transform.Find("StudentPanel");
+        if (oldStudent != null) DestroyImmediate(oldStudent.gameObject);
         Transform oldLogin = canvasObj.transform.Find("LoginPanel");
         if (oldLogin != null) DestroyImmediate(oldLogin.gameObject);
         Transform oldTeacher = canvasObj.transform.Find("TeacherPanel");
         if (oldTeacher != null) DestroyImmediate(oldTeacher.gameObject);
 
-        // 3. Crear LoginPanel
+        // 3. Crear StudentPanel (Visor Sketchfab)
+        GameObject studentPanel = CreatePanel(canvasObj.transform, "StudentPanel", new Color(0, 0, 0, 0), new Vector2(0, 0), new Vector2(1, 1));
+        
+        // Panell de controls inferior/lateral
+        GameObject controlsPanel = CreatePanel(studentPanel.transform, "Controls", new Color(0.1f, 0.1f, 0.1f, 0.8f), new Vector2(0, 0), new Vector2(0, 0));
+        RectTransform ctrlRect = controlsPanel.GetComponent<RectTransform>();
+        ctrlRect.anchorMin = new Vector2(0, 0);
+        ctrlRect.anchorMax = new Vector2(0, 1);
+        ctrlRect.sizeDelta = new Vector2(250, 0); // Ample de 250px a l'esquerra
+
+        CreateText(controlsPanel.transform, "Title", "Visor de l'Alumne", new Vector2(125, -30), new Vector2(200, 30), TextAnchor.MiddleCenter);
+
+        // Toggles Model
+        CreateText(controlsPanel.transform, "LblModel", "Selecció de Model:", new Vector2(125, -80), new Vector2(200, 30), TextAnchor.MiddleLeft);
+        Toggle highpolyToggle = CreateToggle(controlsPanel.transform, "HighpolyToggle", "Mostrar Highpoly", new Vector2(125, -120));
+        highpolyToggle.isOn = false;
+        UnityEventTools.AddPersistentListener(highpolyToggle.onValueChanged, new UnityAction<bool>(modelLoader.ToggleHighpoly));
+
+        // Toggles Materials
+        CreateText(controlsPanel.transform, "LblMat", "Canals de Material:", new Vector2(125, -180), new Vector2(200, 30), TextAnchor.MiddleLeft);
+        Toggle albedoToggle = CreateToggle(controlsPanel.transform, "AlbedoToggle", "Color (Albedo)", new Vector2(125, -220));
+        Toggle normalToggle = CreateToggle(controlsPanel.transform, "NormalToggle", "Relleu (Normal Map)", new Vector2(125, -260));
+        Toggle metallicToggle = CreateToggle(controlsPanel.transform, "MetallicToggle", "Metall/Rugositat", new Vector2(125, -300));
+        
+        // Aquests es connectaran per codi durant el Start perquè el MaterialViewer es crea dinàmicament
+        var hook = GetOrAddComponent<StudentUIHook>(studentPanel);
+        hook.modelLoader = modelLoader;
+        hook.albedoToggle = albedoToggle;
+        hook.normalToggle = normalToggle;
+        hook.metallicToggle = metallicToggle;
+
+        // 4. Crear LoginPanel
         GameObject loginPanel = CreatePanel(canvasObj.transform, "LoginPanel", new Color(0.2f, 0.2f, 0.2f, 0.95f), new Vector2(0.35f, 0.35f), new Vector2(0.65f, 0.65f));
         CreateText(loginPanel.transform, "Titol", "Mode Professor", new Vector2(0, 50), new Vector2(200, 30), TextAnchor.MiddleCenter);
         InputField passInput = CreateInputField(loginPanel.transform, "PasswordInput", new Vector2(0, 0));
@@ -66,7 +116,7 @@ public class SceneSetup : EditorWindow
         
         UnityEventTools.AddPersistentListener(loginBtn.onClick, new UnityAction(authManager.TryLoginTeacher));
 
-        // 4. Crear TeacherPanel
+        // 5. Crear TeacherPanel
         GameObject teacherPanel = CreatePanel(canvasObj.transform, "TeacherPanel", new Color(0.1f, 0.3f, 0.2f, 0.95f), new Vector2(0.2f, 0.1f), new Vector2(0.8f, 0.9f));
         CreateText(teacherPanel.transform, "Titol", "Avaluació Automàtica", new Vector2(0, 150), new Vector2(300, 30), TextAnchor.MiddleCenter);
         CreateText(teacherPanel.transform, "LabelBudget", "Pressupost Polígons:", new Vector2(-100, 100), new Vector2(200, 30), TextAnchor.MiddleRight);
@@ -78,6 +128,7 @@ public class SceneSetup : EditorWindow
         UnityEventTools.AddPersistentListener(evalBtn.onClick, new UnityAction(polygonCounter.AnalitzarMalla));
 
         // Assignar referències
+        authManager.studentPanel = studentPanel;
         authManager.loginPanel = loginPanel;
         authManager.teacherPanel = teacherPanel;
         authManager.passwordInput = passInput;
@@ -86,6 +137,7 @@ public class SceneSetup : EditorWindow
 
         loginPanel.SetActive(false);
         teacherPanel.SetActive(false);
+        studentPanel.SetActive(true);
 
         Debug.Log("UI generada i connectada automàticament!");
     }
@@ -99,7 +151,7 @@ public class SceneSetup : EditorWindow
 
     private static GameObject CreatePanel(Transform parent, string name, Color color, Vector2 anchorMin, Vector2 anchorMax)
     {
-        GameObject panel = new GameObject(name);
+        GameObject panel = new GameObject(name, typeof(RectTransform));
         panel.transform.SetParent(parent, false);
         Image img = panel.AddComponent<Image>();
         img.color = color;
@@ -160,6 +212,50 @@ public class SceneSetup : EditorWindow
         btn.targetGraphic = img;
 
         return btn;
+    }
+
+    private static Toggle CreateToggle(Transform parent, string name, string labelText, Vector2 pos)
+    {
+        GameObject go = new GameObject(name, typeof(RectTransform));
+        go.transform.SetParent(parent, false);
+        var toggle = go.AddComponent<Toggle>();
+        
+        GameObject bgGo = new GameObject("Background", typeof(RectTransform));
+        bgGo.transform.SetParent(go.transform, false);
+        var bgImage = bgGo.AddComponent<Image>();
+        bgImage.color = Color.white;
+        RectTransform bgRect = bgGo.GetComponent<RectTransform>();
+        bgRect.anchoredPosition = new Vector2(-80, 0);
+        bgRect.sizeDelta = new Vector2(20, 20);
+        
+        GameObject checkGo = new GameObject("Checkmark", typeof(RectTransform));
+        checkGo.transform.SetParent(bgGo.transform, false);
+        var checkImage = checkGo.AddComponent<Image>();
+        checkImage.color = Color.black;
+        RectTransform checkRect = checkGo.GetComponent<RectTransform>();
+        checkRect.anchoredPosition = Vector2.zero;
+        checkRect.sizeDelta = new Vector2(14, 14);
+        
+        GameObject textGo = new GameObject("Label", typeof(RectTransform));
+        textGo.transform.SetParent(go.transform, false);
+        var text = textGo.AddComponent<Text>();
+        text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        text.text = labelText;
+        text.color = Color.white;
+        text.alignment = TextAnchor.MiddleLeft;
+        RectTransform textRect = textGo.GetComponent<RectTransform>();
+        textRect.anchoredPosition = new Vector2(20, 0);
+        textRect.sizeDelta = new Vector2(180, 30);
+        
+        toggle.targetGraphic = bgImage;
+        toggle.graphic = checkImage;
+        toggle.isOn = true;
+        
+        RectTransform rect = go.GetComponent<RectTransform>();
+        rect.anchoredPosition = pos;
+        rect.sizeDelta = new Vector2(200, 30);
+
+        return toggle;
     }
 
     private static Text CreateText(Transform parent, string name, string labelText, Vector2 pos, Vector2 size, TextAnchor alignment)

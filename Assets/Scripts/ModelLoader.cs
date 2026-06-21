@@ -4,35 +4,76 @@ using System.Collections;
 public class ModelLoader : MonoBehaviour
 {
     public PolygonCounter polygonCounter;
-    private GameObject loadedModel;
+    
+    public GameObject highpolyContainer;
+    public GameObject lowpolyContainer;
+
+    [HideInInspector]
+    public MaterialViewer materialViewer;
+
+    private bool isHighpolyActive = false;
 
     void Start()
     {
-        // L'alumne col·loca el seu model 3D com a fill del ModelLoader a l'editor.
-        // Al iniciar l'executable, detectem el model i l'assignem per quan el professor vulgui avaluar.
-        StartCoroutine(FindAndAssignModel());
+        if (highpolyContainer == null)
+        {
+            Transform t = transform.Find("HighpolyContainer");
+            if (t != null) highpolyContainer = t.gameObject;
+        }
+        if (lowpolyContainer == null)
+        {
+            Transform t = transform.Find("LowpolyContainer");
+            if (t != null) lowpolyContainer = t.gameObject;
+        }
+
+        materialViewer = gameObject.AddComponent<MaterialViewer>();
+        
+        SetHighpolyActive(false);
+
+        StartCoroutine(DelayedInit());
     }
 
-    private IEnumerator FindAndAssignModel()
+    private IEnumerator DelayedInit()
     {
-        // Esperem un frame perquè l'escena acabi de carregar
         yield return new WaitForEndOfFrame();
-
-        if (transform.childCount > 0)
+        
+        if (materialViewer != null)
         {
-            loadedModel = transform.GetChild(0).gameObject;
-            Debug.Log("Model detectat correctament: " + loadedModel.name);
-            
-            // Passem la referència al comptador de polígons però NO l'avaluem encara.
-            // L'avaluació es farà quan el professor premi el botó des del Panell Ocult.
-            if (polygonCounter != null)
-            {
-                polygonCounter.SetModel(loadedModel);
-            }
+            materialViewer.Initialize();
         }
-        else
+
+        UpdatePolygonCounter();
+    }
+
+    public void SetHighpolyActive(bool active)
+    {
+        isHighpolyActive = active;
+
+        if (highpolyContainer != null) highpolyContainer.SetActive(active);
+        if (lowpolyContainer != null) lowpolyContainer.SetActive(!active);
+
+        UpdatePolygonCounter();
+    }
+    
+    // Per enllaçar amb el botó o Toggle
+    public void ToggleHighpoly(bool state)
+    {
+        SetHighpolyActive(state);
+    }
+    
+    public void ToggleLowpoly(bool state)
+    {
+        SetHighpolyActive(!state);
+    }
+
+    private void UpdatePolygonCounter()
+    {
+        if (polygonCounter != null)
         {
-            Debug.LogWarning("No s'ha trobat cap model. Has de posar el teu .glb com a fill de l'objecte ModelLoader.");
+            // Enviem al PolygonCounter el contenidor actiu
+            GameObject target = isHighpolyActive ? highpolyContainer : lowpolyContainer;
+            if (target == null) target = gameObject;
+            polygonCounter.SetModel(target);
         }
     }
 }

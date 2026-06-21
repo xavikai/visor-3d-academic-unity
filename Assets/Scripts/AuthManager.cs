@@ -6,6 +6,7 @@ public class AuthManager : MonoBehaviour
 {
     public static bool IsTeacherMode = false;
 
+    public GameObject studentPanel;
     public GameObject loginPanel;
     public GameObject teacherPanel;
     public InputField passwordInput;
@@ -14,15 +15,14 @@ public class AuthManager : MonoBehaviour
 
     void Start()
     {
-        // En mode Standalone l'alumne no veu cap UI (només el seu model 3D)
         IsTeacherMode = false;
         if (loginPanel != null) loginPanel.SetActive(false);
         if (teacherPanel != null) teacherPanel.SetActive(false);
+        if (studentPanel != null) studentPanel.SetActive(true);
     }
 
     void Update()
     {
-        // Drecera oculta per obrir el Login del professor usant el Nou Input System
         if (Keyboard.current != null)
         {
             if (Keyboard.current.ctrlKey.isPressed && 
@@ -51,10 +51,14 @@ public class AuthManager : MonoBehaviour
             IsTeacherMode = true;
             if (loginPanel != null) loginPanel.SetActive(false);
             if (teacherPanel != null) teacherPanel.SetActive(true);
+            if (studentPanel != null) studentPanel.SetActive(false); // Amaguem els controls de l'alumne
+            
+            // Buidem el camp per si es torna a mostrar
+            passwordInput.text = "";
         }
         else
         {
-            Debug.LogWarning("Contrasenya incorrecta.");
+            Debug.LogWarning("Contrasenya incorrecta");
         }
     }
 }
