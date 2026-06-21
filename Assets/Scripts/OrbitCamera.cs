@@ -19,6 +19,7 @@ public class OrbitCamera : MonoBehaviour
     
     private float currentDistance;
     private float targetDistance;
+    private float defaultDistance = 5.0f;
     
     private Vector3 currentPan;
     private Vector3 targetPan;
@@ -46,6 +47,13 @@ public class OrbitCamera : MonoBehaviour
     {
         if (target != null && Mouse.current != null)
         {
+            // Tecla F per centrar (Focus)
+            if (Keyboard.current != null && Keyboard.current.fKey.wasPressedThisFrame)
+            {
+                targetPan = Vector3.zero;
+                targetDistance = defaultDistance;
+            }
+
             Vector2 delta = Mouse.current.delta.ReadValue();
 
             // Rotació (Clic esquerre)
@@ -102,5 +110,6 @@ public class OrbitCamera : MonoBehaviour
         currentDistance = targetDistance; // Aplicar a l'instant
         targetPan = Vector3.zero;
         currentPan = Vector3.zero; // Aplicar a l'instant
+        defaultDistance = targetDistance;
     }
 }
