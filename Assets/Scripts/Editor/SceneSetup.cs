@@ -256,6 +256,7 @@ public class SceneSetup : EditorWindow
         panel.transform.SetParent(parent, false);
         Image img = panel.AddComponent<Image>();
         img.color = color;
+        img.raycastTarget = color.a > 0f;
         RectTransform rect = panel.GetComponent<RectTransform>();
         rect.anchorMin = anchorMin;
         rect.anchorMax = anchorMax;
@@ -415,6 +416,7 @@ public class SceneSetup : EditorWindow
         text.color = Color.white;
         text.alignment = alignment;
         text.fontSize = fontSize;
+        text.raycastTarget = false;
         
         RectTransform rect = textGo.GetComponent<RectTransform>();
         rect.anchoredPosition = pos;
