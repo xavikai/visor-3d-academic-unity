@@ -9,9 +9,15 @@ public class ModelLoader : MonoBehaviour
     public GameObject lowpolyContainer;
 
     [HideInInspector]
+    public List<GameObject> highpolyModels = new List<GameObject>();
+    [HideInInspector]
+    public List<GameObject> lowpolyModels = new List<GameObject>();
+
+    [HideInInspector]
     public MaterialViewer materialViewer;
 
     private bool isHighpolyActive = false;
+    private int currentModelIndex = 0;
 
     void Start()
     {
@@ -24,6 +30,15 @@ public class ModelLoader : MonoBehaviour
         {
             Transform t = transform.Find("LowpolyContainer");
             if (t != null) lowpolyContainer = t.gameObject;
+        }
+
+        if (highpolyContainer != null)
+        {
+            foreach (Transform child in highpolyContainer.transform) highpolyModels.Add(child.gameObject);
+        }
+        if (lowpolyContainer != null)
+        {
+            foreach (Transform child in lowpolyContainer.transform) lowpolyModels.Add(child.gameObject);
         }
 
         materialViewer = gameObject.AddComponent<MaterialViewer>();
@@ -42,18 +57,46 @@ public class ModelLoader : MonoBehaviour
             materialViewer.Initialize();
         }
 
-        UpdatePolygonCounter();
-        AutoFitModel();
+        UpdateActiveModels();
     }
 
     public void SetHighpolyActive(bool active)
     {
         isHighpolyActive = active;
 
-        if (highpolyContainer != null) highpolyContainer.SetActive(active);
-        if (lowpolyContainer != null) lowpolyContainer.SetActive(!active);
+        // Mantenim els contenidors actius i apaguem/encenem els fills per separat
+        if (highpolyContainer != null) highpolyContainer.SetActive(true);
+        if (lowpolyContainer != null) lowpolyContainer.SetActive(true);
+
+        UpdateActiveModels();
+    }
+
+    public void SetCurrentModel(int index)
+    {
+        currentModelIndex = index;
+        UpdateActiveModels();
+    }
+
+    private void UpdateActiveModels()
+    {
+        // Apagar-ho tot
+        foreach (var m in highpolyModels) if (m != null) m.SetActive(false);
+        foreach (var m in lowpolyModels) if (m != null) m.SetActive(false);
+
+        // Encendre el model actual en la versió corresponent
+        if (isHighpolyActive)
+        {
+            if (currentModelIndex >= 0 && currentModelIndex < highpolyModels.Count)
+                highpolyModels[currentModelIndex].SetActive(true);
+        }
+        else
+        {
+            if (currentModelIndex >= 0 && currentModelIndex < lowpolyModels.Count)
+                lowpolyModels[currentModelIndex].SetActive(true);
+        }
 
         UpdatePolygonCounter();
+        AutoFitModel();
     }
     
     // Per enllaçar amb el botó o Toggle
@@ -71,8 +114,12 @@ public class ModelLoader : MonoBehaviour
     {
         if (polygonCounter != null)
         {
-            // Enviem al PolygonCounter el contenidor actiu
-            GameObject target = isHighpolyActive ? highpolyContainer : lowpolyContainer;
+            GameObject target = null;
+            if (isHighpolyActive && currentModelIndex >= 0 && currentModelIndex < highpolyModels.Count)
+                target = highpolyModels[currentModelIndex];
+            else if (!isHighpolyActive && currentModelIndex >= 0 && currentModelIndex < lowpolyModels.Count)
+                target = lowpolyModels[currentModelIndex];
+                
             if (target == null) target = gameObject;
             polygonCounter.SetModel(target);
         }
@@ -80,32 +127,38 @@ public class ModelLoader : MonoBehaviour
 
     private void AutoFitModel()
     {
-        Renderer[] renderers = GetComponentsInChildren<Renderer>(true);
+        // Només volem ajustar la càmera a l'objecte ACTIU actual, no a tots
+        Renderer[] renderers = GetComponentsInChildren<Renderer>(false); // Només els actius
         if (renderers.Length == 0) return;
 
         Bounds bounds = renderers[0].bounds;
         foreach (Renderer r in renderers)
         {
-            bounds.Encapsulate(r.bounds);
+            if (r.gameObject.activeInHierarchy && r.name != "WireframeOverlay" && !r.name.EndsWith("_UVLayout"))
+                bounds.Encapsulate(r.bounds);
         }
 
-        // Movem els contenidors en direcció contrària al centre de la caixa englobant
-        // per forçar que el centre de l'objecte global sigui (0,0,0)
-        Vector3 offset = -bounds.center;
+        // Calculem l'offset necessari per moure només els contenidors globals perquè el centre ACTIU sigui 0,0,0
+        // Wait, si movem els contenidors globals per cada model, es pot desquadrar tot.
+        // Millor demanar a la càmera que orbiti al voltant del nou centre!
+        Vector3 currentCenter = bounds.center;
         
-        if (highpolyContainer != null) highpolyContainer.transform.position += offset;
-        if (lowpolyContainer != null) lowpolyContainer.transform.position += offset;
-
         // Calculem quina hauria de ser la distància de la càmera segons la mida de l'objecte
         float maxDimension = Mathf.Max(bounds.size.x, bounds.size.y, bounds.size.z);
         float requiredDistance = maxDimension * 1.5f; 
         
         if (requiredDistance < 1f) requiredDistance = 1f;
 
-        // Actualitzem l'OrbitCamera
+        // Actualitzem l'OrbitCamera per mirar al centre de l'objecte actual
         OrbitCamera cam = Camera.main != null ? Camera.main.GetComponent<OrbitCamera>() : null;
         if (cam != null)
         {
+            // Update OrbitCamera to support targeting a specific world point instead of a transform, or just use the center
+            // Since OrbitCamera targets modelLoaderObj.transform, we can just move modelLoaderObj so the center is 0,0,0
+            Vector3 offset = -bounds.center + transform.position;
+            if (highpolyContainer != null) highpolyContainer.transform.position += offset;
+            if (lowpolyContainer != null) lowpolyContainer.transform.position += offset;
+
             cam.ResetView(requiredDistance);
         }
         

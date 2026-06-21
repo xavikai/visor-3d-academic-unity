@@ -8,6 +8,9 @@ public class MaterialViewer : MonoBehaviour
         public Texture baseMap;
         public Texture bumpMap;
         public Texture metallicGlossMap;
+        public float bumpScale = 1f;
+        public float metallic = 0f;
+        public float smoothness = 0.5f;
     }
 
     private Dictionary<Material, OriginalMaterialData> originalData = new Dictionary<Material, OriginalMaterialData>();
@@ -75,6 +78,10 @@ public class MaterialViewer : MonoBehaviour
                     if (m.HasProperty("_BaseMap")) data.baseMap = m.GetTexture("_BaseMap");
                     if (m.HasProperty("_BumpMap")) data.bumpMap = m.GetTexture("_BumpMap");
                     if (m.HasProperty("_MetallicGlossMap")) data.metallicGlossMap = m.GetTexture("_MetallicGlossMap");
+                    
+                    if (m.HasProperty("_BumpScale")) data.bumpScale = m.GetFloat("_BumpScale");
+                    if (m.HasProperty("_Metallic")) data.metallic = m.GetFloat("_Metallic");
+                    if (m.HasProperty("_Smoothness")) data.smoothness = m.GetFloat("_Smoothness");
 
                     originalData[m] = data;
                     allMaterials.Add(m);
@@ -150,6 +157,33 @@ public class MaterialViewer : MonoBehaviour
         {
             if (m.HasProperty("_MetallicGlossMap"))
                 m.SetTexture("_MetallicGlossMap", state ? originalData[m].metallicGlossMap : null);
+        }
+    }
+
+    public void SetNormalIntensity(float value)
+    {
+        foreach (Material m in allMaterials)
+        {
+            if (m.HasProperty("_BumpScale"))
+                m.SetFloat("_BumpScale", originalData[m].bumpScale * value);
+        }
+    }
+
+    public void SetMetallic(float value)
+    {
+        foreach (Material m in allMaterials)
+        {
+            if (m.HasProperty("_Metallic"))
+                m.SetFloat("_Metallic", value);
+        }
+    }
+
+    public void SetSmoothness(float value)
+    {
+        foreach (Material m in allMaterials)
+        {
+            if (m.HasProperty("_Smoothness"))
+                m.SetFloat("_Smoothness", value);
         }
     }
 

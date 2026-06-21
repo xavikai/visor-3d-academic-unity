@@ -1,8 +1,12 @@
 using UnityEngine;
 using UnityEditor;
 using UnityEngine.UI;
-using UnityEditor.Events;
 using UnityEngine.Events;
+using UnityEngine.Rendering;
+#if UNITY_EDITOR
+using UnityEditor.Events;
+using UnityEditor;
+#endif
 
 public class SceneSetup : EditorWindow
 {
@@ -70,6 +74,46 @@ public class SceneSetup : EditorWindow
         {
             var orbit = GetOrAddComponent<OrbitCamera>(mainCam.gameObject);
             orbit.target = modelLoaderObj.transform;
+
+            mainCam.clearFlags = CameraClearFlags.SolidColor;
+            mainCam.backgroundColor = new Color(0.12f, 0.12f, 0.12f, 1f);
+
+#if UNITY_EDITOR
+            // Add Volume for Post-Processing
+            GameObject volumeObj = GameObject.Find("GlobalVolume");
+            if (volumeObj == null)
+            {
+                volumeObj = new GameObject("GlobalVolume");
+                var volume = volumeObj.AddComponent<Volume>();
+                volume.isGlobal = true;
+
+                VolumeProfile profile = AssetDatabase.LoadAssetAtPath<VolumeProfile>("Assets/Settings/ViewerProfile.asset");
+                if (profile == null)
+                {
+                    if (!System.IO.Directory.Exists("Assets/Settings")) System.IO.Directory.CreateDirectory("Assets/Settings");
+                    profile = ScriptableObject.CreateInstance<VolumeProfile>();
+                    AssetDatabase.CreateAsset(profile, "Assets/Settings/ViewerProfile.asset");
+
+                    var bloom = profile.Add<UnityEngine.Rendering.Universal.Bloom>(true);
+                    bloom.intensity.Override(1.5f);
+                    bloom.threshold.Override(1f);
+
+                    var tonemapping = profile.Add<UnityEngine.Rendering.Universal.Tonemapping>(true);
+                    tonemapping.mode.Override(UnityEngine.Rendering.Universal.TonemappingMode.ACES);
+
+                    var vignette = profile.Add<UnityEngine.Rendering.Universal.Vignette>(true);
+                    vignette.intensity.Override(0.3f);
+                    vignette.smoothness.Override(0.8f);
+                    
+                    AssetDatabase.SaveAssets();
+                }
+                volume.profile = profile;
+            }
+
+            var camData = mainCam.GetComponent<UnityEngine.Rendering.Universal.UniversalAdditionalCameraData>();
+            if (camData == null) camData = mainCam.gameObject.AddComponent<UnityEngine.Rendering.Universal.UniversalAdditionalCameraData>();
+            camData.renderPostProcessing = true;
+#endif
         }
 
         // 2. Crear Canvas
@@ -119,7 +163,9 @@ public class SceneSetup : EditorWindow
         CreateText(controlsPanel.transform, "Title", "Visor de l'Alumne", new Vector2(0, 400), new Vector2(350, 40), TextAnchor.MiddleCenter, 32);
 
         // Toggles Model
-        CreateText(controlsPanel.transform, "LblModel", "Selecció de Model:", new Vector2(20, 330), new Vector2(300, 40), TextAnchor.MiddleLeft, 24);
+        CreateText(controlsPanel.transform, "LblModel", "Model:", new Vector2(-100, 330), new Vector2(100, 40), TextAnchor.MiddleLeft, 24);
+        Dropdown modelDropdown = CreateDropdown(controlsPanel.transform, "ModelDropdown", new Vector2(70, 330));
+        
         Toggle highpolyToggle = CreateToggle(controlsPanel.transform, "HighpolyToggle", "Mostrar Highpoly", new Vector2(0, 280));
         highpolyToggle.isOn = false;
         UnityEventTools.AddPersistentListener(highpolyToggle.onValueChanged, new UnityAction<bool>(modelLoader.ToggleHighpoly));
@@ -127,25 +173,35 @@ public class SceneSetup : EditorWindow
         // Toggles Materials
         CreateText(controlsPanel.transform, "LblMat", "Canals de Material:", new Vector2(20, 200), new Vector2(300, 40), TextAnchor.MiddleLeft, 24);
         Toggle albedoToggle = CreateToggle(controlsPanel.transform, "AlbedoToggle", "Color (Albedo)", new Vector2(0, 150));
+        
         Toggle normalToggle = CreateToggle(controlsPanel.transform, "NormalToggle", "Relleu (Normal Map)", new Vector2(0, 100));
-        Toggle metallicToggle = CreateToggle(controlsPanel.transform, "MetallicToggle", "Metall/Rugositat", new Vector2(0, 50));
-        Toggle wireframeToggle = CreateToggle(controlsPanel.transform, "WireframeToggle", "Malla (Wireframe)", new Vector2(0, 0));
+        Slider normalSlider = CreateSlider(controlsPanel.transform, "NormalSlider", new Vector2(70, 75), 0f, 2f, 1f);
+        
+        Toggle metallicToggle = CreateToggle(controlsPanel.transform, "MetallicToggle", "Metall/Rugositat", new Vector2(0, 20));
+        Slider metallicSlider = CreateSlider(controlsPanel.transform, "MetallicSlider", new Vector2(70, -5), 0f, 1f, 0f);
+        Slider smoothnessSlider = CreateSlider(controlsPanel.transform, "SmoothnessSlider", new Vector2(70, -30), 0f, 1f, 0.5f);
+        
+        Toggle wireframeToggle = CreateToggle(controlsPanel.transform, "WireframeToggle", "Malla (Wireframe)", new Vector2(0, -80));
         wireframeToggle.isOn = false;
-        Toggle vertexColorToggle = CreateToggle(controlsPanel.transform, "VertexColorToggle", "Vertex Colors", new Vector2(0, -50));
+        Toggle vertexColorToggle = CreateToggle(controlsPanel.transform, "VertexColorToggle", "Vertex Colors", new Vector2(0, -130));
         vertexColorToggle.isOn = false;
-        Toggle uvToggle = CreateToggle(controlsPanel.transform, "UvToggle", "Mostrar UVs", new Vector2(0, -100));
+        Toggle uvToggle = CreateToggle(controlsPanel.transform, "UvToggle", "Mostrar UVs", new Vector2(0, -180));
         uvToggle.isOn = false;
 
         // Estadístiques
-        CreateText(controlsPanel.transform, "LblStats", "Estadístiques:", new Vector2(20, -180), new Vector2(360, 40), TextAnchor.MiddleLeft, 24);
-        Text statsText = CreateText(controlsPanel.transform, "StatsText", "Calculant...", new Vector2(20, -350), new Vector2(360, 250), TextAnchor.UpperLeft, 18);
+        CreateText(controlsPanel.transform, "LblStats", "Estadístiques:", new Vector2(20, -250), new Vector2(360, 40), TextAnchor.MiddleLeft, 24);
+        Text statsText = CreateText(controlsPanel.transform, "StatsText", "Calculant...", new Vector2(20, -420), new Vector2(360, 250), TextAnchor.UpperLeft, 18);
         
         // Aquests es connectaran per codi durant el Start perquè el MaterialViewer es crea dinàmicament
         var hook = GetOrAddComponent<StudentUIHook>(studentPanel);
         hook.modelLoader = modelLoader;
+        hook.modelDropdown = modelDropdown;
         hook.albedoToggle = albedoToggle;
         hook.normalToggle = normalToggle;
+        hook.normalSlider = normalSlider;
         hook.metallicToggle = metallicToggle;
+        hook.metallicSlider = metallicSlider;
+        hook.smoothnessSlider = smoothnessSlider;
         hook.wireframeToggle = wireframeToggle;
         hook.vertexColorToggle = vertexColorToggle;
         hook.uvToggle = uvToggle;
@@ -301,6 +357,51 @@ public class SceneSetup : EditorWindow
 
         return toggle;
     }
+
+#if UNITY_EDITOR
+    private static Slider CreateSlider(Transform parent, string name, Vector2 pos, float min = 0f, float max = 1f, float def = 1f)
+    {
+        DefaultControls.Resources uiResources = new DefaultControls.Resources();
+        uiResources.standard = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/UISprite.psd");
+        uiResources.background = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/Background.psd");
+        uiResources.knob = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/Knob.psd");
+
+        GameObject go = DefaultControls.CreateSlider(uiResources);
+        go.name = name;
+        go.transform.SetParent(parent, false);
+        RectTransform rect = go.GetComponent<RectTransform>();
+        rect.anchoredPosition = pos;
+        rect.sizeDelta = new Vector2(150, 20);
+        
+        Slider slider = go.GetComponent<Slider>();
+        slider.minValue = min;
+        slider.maxValue = max;
+        slider.value = def;
+        return slider;
+    }
+
+    private static Dropdown CreateDropdown(Transform parent, string name, Vector2 pos)
+    {
+        DefaultControls.Resources uiResources = new DefaultControls.Resources();
+        uiResources.standard = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/UISprite.psd");
+        uiResources.background = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/Background.psd");
+        uiResources.dropdown = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/DropdownArrow.psd");
+        uiResources.mask = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/UIMask.psd");
+        uiResources.checkmark = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/Checkmark.psd");
+
+        GameObject go = DefaultControls.CreateDropdown(uiResources);
+        go.name = name;
+        go.transform.SetParent(parent, false);
+        RectTransform rect = go.GetComponent<RectTransform>();
+        rect.anchoredPosition = pos;
+        rect.sizeDelta = new Vector2(180, 30);
+        
+        Text[] texts = go.GetComponentsInChildren<Text>(true);
+        foreach (var text in texts) text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        
+        return go.GetComponent<Dropdown>();
+    }
+#endif
 
     private static Text CreateText(Transform parent, string name, string labelText, Vector2 pos, Vector2 size, TextAnchor alignment, int fontSize = 20)
     {

@@ -6,10 +6,14 @@ public class StudentUIHook : MonoBehaviour
     public ModelLoader modelLoader;
     public Toggle albedoToggle;
     public Toggle normalToggle;
+    public Slider normalSlider;
     public Toggle metallicToggle;
+    public Slider metallicSlider;
+    public Slider smoothnessSlider;
     public Toggle wireframeToggle;
     public Toggle vertexColorToggle;
     public Toggle uvToggle;
+    public Dropdown modelDropdown;
     public Text statsText;
 
     void Start()
@@ -20,6 +24,12 @@ public class StudentUIHook : MonoBehaviour
         if (wireframeToggle != null) wireframeToggle.onValueChanged.AddListener(OnWireframeChanged);
         if (vertexColorToggle != null) vertexColorToggle.onValueChanged.AddListener(OnVertexColorChanged);
         if (uvToggle != null) uvToggle.onValueChanged.AddListener(OnUvChanged);
+        
+        if (normalSlider != null) normalSlider.onValueChanged.AddListener(OnNormalIntensityChanged);
+        if (metallicSlider != null) metallicSlider.onValueChanged.AddListener(OnMetallicIntensityChanged);
+        if (smoothnessSlider != null) smoothnessSlider.onValueChanged.AddListener(OnSmoothnessChanged);
+        
+        if (modelDropdown != null) modelDropdown.onValueChanged.AddListener(OnModelSelected);
         
         UpdateStats();
     }
