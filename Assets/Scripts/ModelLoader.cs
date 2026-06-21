@@ -1,59 +1,38 @@
 using UnityEngine;
-using System.Runtime.InteropServices;
-using GLTFast;
-using System.Threading.Tasks;
-using System;
+using System.Collections;
 
 public class ModelLoader : MonoBehaviour
 {
-    [DllImport("__Internal")]
-    private static extern void InitDragAndDrop();
-
     public PolygonCounter polygonCounter;
-    private GameObject currentModel;
+    private GameObject loadedModel;
 
     void Start()
     {
-#if UNITY_WEBGL && !UNITY_EDITOR
-        InitDragAndDrop();
-#endif
+        // L'alumne col·loca el seu model 3D com a fill del ModelLoader a l'editor.
+        // Al iniciar l'executable, detectem el model i l'assignem per quan el professor vulgui avaluar.
+        StartCoroutine(FindAndAssignModel());
     }
 
-    public void CarregarModelFromWebBase64(string dataUrl)
+    private IEnumerator FindAndAssignModel()
     {
-        int commaIndex = dataUrl.IndexOf(',');
-        if (commaIndex >= 0)
-        {
-            string base64 = dataUrl.Substring(commaIndex + 1);
-            byte[] bytes = Convert.FromBase64String(base64);
-            LoadModelFromBytes(bytes);
-        }
-    }
+        // Esperem un frame perquè l'escena acabi de carregar
+        yield return new WaitForEndOfFrame();
 
-    private async void LoadModelFromBytes(byte[] data)
-    {
-        if (currentModel != null)
+        if (transform.childCount > 0)
         {
-            Destroy(currentModel);
-        }
-
-        currentModel = new GameObject("LoadedModel");
-        currentModel.transform.SetParent(this.transform, false);
-
-        var gltf = new GltfImport();
-        bool success = await gltf.LoadGltfBinary(data, new Uri(""));
-        
-        if (success)
-        {
-            success = await gltf.InstantiateMainSceneAsync(currentModel.transform);
-            if (success && polygonCounter != null)
+            loadedModel = transform.GetChild(0).gameObject;
+            Debug.Log("Model detectat correctament: " + loadedModel.name);
+            
+            // Passem la referència al comptador de polígons però NO l'avaluem encara.
+            // L'avaluació es farà quan el professor premi el botó des del Panell Ocult.
+            if (polygonCounter != null)
             {
-                polygonCounter.AnalitzarMalla(currentModel);
+                polygonCounter.SetModel(loadedModel);
             }
         }
         else
         {
-            Debug.LogError("Error loading GLB.");
+            Debug.LogWarning("No s'ha trobat cap model. Has de posar el teu .glb com a fill de l'objecte ModelLoader.");
         }
     }
 }

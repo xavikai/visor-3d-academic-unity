@@ -5,7 +5,7 @@ using TMPro;
 
 public class SceneSetup : EditorWindow
 {
-    [MenuItem("Visor 3D/1. Generar Escena Automàticament")]
+    [MenuItem("Visor 3D/1. Generar Escena Automàticament (Standalone)")]
     public static void GenerateScene()
     {
         // 1. Crear l'objecte ModelLoader
@@ -29,7 +29,6 @@ public class SceneSetup : EditorWindow
         polygonCounter.evaluator = evaluator;
         evaluator.rubricConfig = rubricConfig;
         evaluator.ollamaClient = ollamaClient;
-        ollamaClient.rubricConfig = rubricConfig;
 
         // 2. Crear Canvas i EventSystem
         Canvas canvas = Object.FindAnyObjectByType<Canvas>();
@@ -54,16 +53,17 @@ public class SceneSetup : EditorWindow
             eventSystemObj.AddComponent<UnityEngine.InputSystem.UI.InputSystemUIInputModule>();
         }
 
-        // 3. Crear Panells de la UI
-        GameObject studentPanel = CreatePanel(canvasObj.transform, "StudentPanel", new Color(0.15f, 0.15f, 0.15f, 1f));
-        GameObject teacherPanel = CreatePanel(canvasObj.transform, "TeacherPanel", new Color(0.1f, 0.25f, 0.1f, 1f));
+        // 3. Crear Panells de la UI (Ocults per defecte)
+        GameObject loginPanel = CreatePanel(canvasObj.transform, "LoginPanel", new Color(0.15f, 0.15f, 0.15f, 0.9f));
+        GameObject teacherPanel = CreatePanel(canvasObj.transform, "TeacherPanel", new Color(0.1f, 0.25f, 0.1f, 0.9f));
+        loginPanel.SetActive(false);
         teacherPanel.SetActive(false);
 
         // Assignar els panells a l'AuthManager automàticament
-        authManager.studentPanel = studentPanel;
+        authManager.loginPanel = loginPanel;
         authManager.teacherPanel = teacherPanel;
 
-        Debug.Log("Escena base i dependències creades amb èxit! El ModelLoader i el Canvas estan configurats.");
+        Debug.Log("Escena Standalone configurada amb èxit! Recorda posar el model 3D com a fill del ModelLoader.");
     }
 
     private static T GetOrAddComponent<T>(GameObject obj) where T : Component

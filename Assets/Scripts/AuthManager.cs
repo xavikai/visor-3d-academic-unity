@@ -5,22 +5,39 @@ public class AuthManager : MonoBehaviour
 {
     public static bool IsTeacherMode = false;
 
+    public GameObject loginPanel; // Abans anomenat studentPanel
     public GameObject teacherPanel;
-    public GameObject studentPanel;
     public TMP_InputField passwordInput;
     
     private string correctPassword = "admin";
 
     void Start()
     {
-        SetStudentMode();
+        // En mode Standalone l'alumne no veu cap UI (només el seu model 3D)
+        IsTeacherMode = false;
+        if (loginPanel != null) loginPanel.SetActive(false);
+        if (teacherPanel != null) teacherPanel.SetActive(false);
     }
 
-    public void SetStudentMode()
+    void Update()
     {
-        IsTeacherMode = false;
-        if (teacherPanel != null) teacherPanel.SetActive(false);
-        if (studentPanel != null) studentPanel.SetActive(true);
+        // Drecera oculta per obrir el Login del professor
+        if ((Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)) && 
+            (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift)) && 
+            Input.GetKeyDown(KeyCode.T))
+        {
+            if (!IsTeacherMode)
+            {
+                bool isLoginActive = loginPanel != null && loginPanel.activeSelf;
+                if (loginPanel != null) loginPanel.SetActive(!isLoginActive);
+            }
+            else
+            {
+                // Si ja som professor, amaguem/mostrem el panell per poder veure el model
+                bool isTeacherActive = teacherPanel != null && teacherPanel.activeSelf;
+                if (teacherPanel != null) teacherPanel.SetActive(!isTeacherActive);
+            }
+        }
     }
 
     public void TryLoginTeacher()
@@ -28,8 +45,8 @@ public class AuthManager : MonoBehaviour
         if (passwordInput != null && passwordInput.text == correctPassword)
         {
             IsTeacherMode = true;
+            if (loginPanel != null) loginPanel.SetActive(false);
             if (teacherPanel != null) teacherPanel.SetActive(true);
-            if (studentPanel != null) studentPanel.SetActive(false);
         }
         else
         {

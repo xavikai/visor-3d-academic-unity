@@ -5,13 +5,26 @@ public class PolygonCounter : MonoBehaviour
     public Evaluator evaluator;
     public int totalTriangles = 0;
     public int totalVertices = 0;
+    
+    private GameObject currentModel;
 
-    public void AnalitzarMalla(GameObject modelImportat)
+    public void SetModel(GameObject model)
     {
+        currentModel = model;
+    }
+
+    public void AnalitzarMalla()
+    {
+        if (currentModel == null)
+        {
+            Debug.LogError("No hi ha cap model assignat per avaluar. L'alumne no ha afegit res.");
+            return;
+        }
+
         totalTriangles = 0;
         totalVertices = 0;
 
-        MeshFilter[] filters = modelImportat.GetComponentsInChildren<MeshFilter>();
+        MeshFilter[] filters = currentModel.GetComponentsInChildren<MeshFilter>();
         foreach (MeshFilter mf in filters)
         {
             if (mf.sharedMesh != null)
