@@ -21,24 +21,32 @@ public class PolygonCounter : MonoBehaviour
             return;
         }
 
-        totalTriangles = 0;
-        totalVertices = 0;
-
-        MeshFilter[] filters = currentModel.GetComponentsInChildren<MeshFilter>();
-        foreach (MeshFilter mf in filters)
-        {
-            if (mf.sharedMesh != null)
-            {
-                totalTriangles += mf.sharedMesh.triangles.Length / 3;
-                totalVertices += mf.sharedMesh.vertexCount;
-            }
-        }
+        GetStats(currentModel, out totalTriangles, out totalVertices);
 
         Debug.Log($"Vèrtexs: {totalVertices}, Triangles: {totalTriangles}");
 
         if (evaluator != null)
         {
             evaluator.Avaluar(totalTriangles, totalVertices);
+        }
+    }
+
+    public void GetStats(GameObject model, out int tris, out int verts)
+    {
+        tris = 0; verts = 0;
+        if (model == null) return;
+
+        MeshFilter[] filters = model.GetComponentsInChildren<MeshFilter>(true);
+        foreach (MeshFilter mf in filters)
+        {
+            if (mf.gameObject.name == "WireframeOverlay") continue;
+
+            if (mf.sharedMesh != null)
+            {
+                // Utilitzem GetIndexCount en comptes de triangles.Length per evitar errors si Read/Write està desactivat accidentalment
+                tris += (int)(mf.sharedMesh.GetIndexCount(0) / 3);
+                verts += mf.sharedMesh.vertexCount;
+            }
         }
     }
 }
