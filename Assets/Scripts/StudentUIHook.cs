@@ -15,6 +15,14 @@ public class StudentUIHook : MonoBehaviour
     public Toggle uvToggle;
     public Dropdown modelDropdown;
     public Text statsText;
+    
+    public Toggle emissionToggle;
+    public Slider emissionSlider;
+    
+    public RawImage imgAlbedo;
+    public RawImage imgNormal;
+    public RawImage imgMetallic;
+    public RawImage imgEmission;
 
     void Start()
     {
@@ -28,10 +36,27 @@ public class StudentUIHook : MonoBehaviour
         if (normalSlider != null) normalSlider.onValueChanged.AddListener(OnNormalIntensityChanged);
         if (metallicSlider != null) metallicSlider.onValueChanged.AddListener(OnMetallicIntensityChanged);
         if (smoothnessSlider != null) smoothnessSlider.onValueChanged.AddListener(OnSmoothnessChanged);
+        if (emissionSlider != null) emissionSlider.onValueChanged.AddListener(OnEmissionIntensityChanged);
+        if (emissionToggle != null) emissionToggle.onValueChanged.AddListener(OnEmissionChanged);
         
         if (modelDropdown != null) modelDropdown.onValueChanged.AddListener(OnModelSelected);
         
         UpdateStats();
+        Invoke("UpdateTextureGallery", 0.5f); // Donem mig segon perquè s'inicialitzi el model actiu
+    }
+
+    public void UpdateTextureGallery()
+    {
+        if (modelLoader == null || modelLoader.materialViewer == null) return;
+
+        var data = modelLoader.materialViewer.GetFirstMaterialData();
+        if (data != null)
+        {
+            if (imgAlbedo != null && data.baseMap != null) imgAlbedo.texture = data.baseMap;
+            if (imgNormal != null && data.bumpMap != null) imgNormal.texture = data.bumpMap;
+            if (imgMetallic != null && data.metallicGlossMap != null) imgMetallic.texture = data.metallicGlossMap;
+            if (imgEmission != null && data.emissionMap != null) imgEmission.texture = data.emissionMap;
+        }
     }
 
     public void UpdateStats()
@@ -118,12 +143,25 @@ public class StudentUIHook : MonoBehaviour
             modelLoader.materialViewer.SetSmoothness(value);
     }
 
+    private void OnEmissionChanged(bool state)
+    {
+        if (modelLoader != null && modelLoader.materialViewer != null)
+            modelLoader.materialViewer.ToggleEmission(state);
+    }
+
+    private void OnEmissionIntensityChanged(float value)
+    {
+        if (modelLoader != null && modelLoader.materialViewer != null)
+            modelLoader.materialViewer.SetEmissionIntensity(value);
+    }
+
     private void OnModelSelected(int index)
     {
         if (modelLoader != null)
         {
             modelLoader.SetCurrentModel(index);
             UpdateStats();
+            UpdateTextureGallery();
         }
     }
 }

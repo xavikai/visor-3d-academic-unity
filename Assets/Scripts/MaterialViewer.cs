@@ -3,14 +3,16 @@ using System.Collections.Generic;
 
 public class MaterialViewer : MonoBehaviour
 {
-    private class OriginalMaterialData
+    public class OriginalMaterialData
     {
         public Texture baseMap;
         public Texture bumpMap;
         public Texture metallicGlossMap;
+        public Texture emissionMap;
         public float bumpScale = 1f;
         public float metallic = 0f;
         public float smoothness = 0.5f;
+        public Color emissionColor = Color.black;
     }
 
     private Dictionary<Material, OriginalMaterialData> originalData = new Dictionary<Material, OriginalMaterialData>();
@@ -82,6 +84,9 @@ public class MaterialViewer : MonoBehaviour
                     if (m.HasProperty("_BumpScale")) data.bumpScale = m.GetFloat("_BumpScale");
                     if (m.HasProperty("_Metallic")) data.metallic = m.GetFloat("_Metallic");
                     if (m.HasProperty("_Smoothness")) data.smoothness = m.GetFloat("_Smoothness");
+                    
+                    if (m.HasProperty("_EmissionMap")) data.emissionMap = m.GetTexture("_EmissionMap");
+                    if (m.HasProperty("_EmissionColor")) data.emissionColor = m.GetColor("_EmissionColor");
 
                     originalData[m] = data;
                     allMaterials.Add(m);
@@ -185,6 +190,35 @@ public class MaterialViewer : MonoBehaviour
             if (m.HasProperty("_Smoothness"))
                 m.SetFloat("_Smoothness", value);
         }
+    }
+
+    public void ToggleEmission(bool state)
+    {
+        foreach (Material m in allMaterials)
+        {
+            if (m.HasProperty("_EmissionMap"))
+                m.SetTexture("_EmissionMap", state ? originalData[m].emissionMap : null);
+            
+            if (state) m.EnableKeyword("_EMISSION");
+            else m.DisableKeyword("_EMISSION");
+        }
+    }
+
+    public void SetEmissionIntensity(float value)
+    {
+        foreach (Material m in allMaterials)
+        {
+            if (m.HasProperty("_EmissionColor"))
+                m.SetColor("_EmissionColor", originalData[m].emissionColor * value);
+        }
+    }
+
+    // Per la galeria de textures 2D
+    public OriginalMaterialData GetFirstMaterialData()
+    {
+        if (allMaterials.Count > 0 && originalData.ContainsKey(allMaterials[0]))
+            return originalData[allMaterials[0]];
+        return null;
     }
 
     public void ToggleWireframe(bool state)

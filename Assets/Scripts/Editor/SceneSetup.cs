@@ -75,9 +75,28 @@ public class SceneSetup : EditorWindow
             orbit.target = modelLoaderObj.transform;
 
             mainCam.clearFlags = CameraClearFlags.SolidColor;
-            mainCam.backgroundColor = new Color(0.12f, 0.12f, 0.12f, 1f);
+            mainCam.backgroundColor = new Color(0.1f, 0.1f, 0.1f, 1f); // Gris fosc neutral
 
 #if UNITY_EDITOR
+            // 2.2 Entorn HDRI (Per reflexos fotorealistes)
+            string hdriPath = "Assets/Resources/studio_small_09_1k.hdr";
+            TextureImporter importer = AssetImporter.GetAtPath(hdriPath) as TextureImporter;
+            if (importer != null && importer.textureShape != TextureImporterShape.TextureCube)
+            {
+                importer.textureShape = TextureImporterShape.TextureCube;
+                importer.SaveAndReimport();
+            }
+
+            Cubemap hdriCubemap = AssetDatabase.LoadAssetAtPath<Cubemap>(hdriPath);
+            if (hdriCubemap != null)
+            {
+                Material skyboxMat = new Material(Shader.Find("Skybox/Cubemap"));
+                skyboxMat.name = "HDRI_Skybox";
+                skyboxMat.SetTexture("_Tex", hdriCubemap);
+                RenderSettings.skybox = skyboxMat;
+                DynamicGI.UpdateEnvironment();
+            }
+
             // Add Volume for Post-Processing
             GameObject volumeObj = GameObject.Find("GlobalVolume");
             if (volumeObj == null)
@@ -183,16 +202,38 @@ public class SceneSetup : EditorWindow
         CreateText(controlsPanel.transform, "LblSmooth", "Rugositat:", new Vector2(0, -30), new Vector2(100, 20), TextAnchor.MiddleLeft, 14);
         Slider smoothnessSlider = CreateSlider(controlsPanel.transform, "SmoothnessSlider", new Vector2(90, -30), 0f, 1f, 0.5f);
         
-        Toggle wireframeToggle = CreateToggle(controlsPanel.transform, "WireframeToggle", "Malla (Wireframe)", new Vector2(0, -80));
+        Toggle emissionToggle = CreateToggle(controlsPanel.transform, "EmissionToggle", "Llum (Emissió)", new Vector2(0, -70));
+        CreateText(controlsPanel.transform, "LblEmission", "Intensitat:", new Vector2(0, -95), new Vector2(100, 20), TextAnchor.MiddleLeft, 14);
+        Slider emissionSlider = CreateSlider(controlsPanel.transform, "EmissionSlider", new Vector2(90, -95), 0f, 5f, 1f);
+        
+        Toggle wireframeToggle = CreateToggle(controlsPanel.transform, "WireframeToggle", "Malla (Wireframe)", new Vector2(0, -140));
         wireframeToggle.isOn = false;
-        Toggle vertexColorToggle = CreateToggle(controlsPanel.transform, "VertexColorToggle", "Vertex Colors", new Vector2(0, -130));
+        Toggle vertexColorToggle = CreateToggle(controlsPanel.transform, "VertexColorToggle", "Vertex Colors", new Vector2(0, -190));
         vertexColorToggle.isOn = false;
-        Toggle uvToggle = CreateToggle(controlsPanel.transform, "UvToggle", "Mostrar UVs", new Vector2(0, -180));
+        Toggle uvToggle = CreateToggle(controlsPanel.transform, "UvToggle", "Mostrar UVs", new Vector2(0, -240));
         uvToggle.isOn = false;
 
+        // Panell de Textures (Galeria 2D) a la dreta
+        GameObject textureGalleryPanel = CreatePanel(studentPanel.transform, "TextureGalleryPanel", new Color(0.1f, 0.1f, 0.1f, 0.9f), new Vector2(1, 0), new Vector2(1, 1));
+        RectTransform tgRect = textureGalleryPanel.GetComponent<RectTransform>();
+        tgRect.pivot = new Vector2(1, 0.5f);
+        tgRect.anchoredPosition = new Vector2(0, 0);
+        tgRect.sizeDelta = new Vector2(140, 0); // 140 width, full height
+        
+        CreateText(textureGalleryPanel.transform, "LblGallery", "Textures 2D", new Vector2(0, -20), new Vector2(140, 30), TextAnchor.UpperCenter, 18);
+        
+        CreateText(textureGalleryPanel.transform, "LblAlb", "Albedo", new Vector2(0, -60), new Vector2(120, 20), TextAnchor.MiddleCenter, 14);
+        RawImage imgAlbedo = CreateRawImage(textureGalleryPanel.transform, "ImgAlbedo", new Vector2(0, -130));
+        CreateText(textureGalleryPanel.transform, "LblNrm", "Normal", new Vector2(0, -210), new Vector2(120, 20), TextAnchor.MiddleCenter, 14);
+        RawImage imgNormal = CreateRawImage(textureGalleryPanel.transform, "ImgNormal", new Vector2(0, -280));
+        CreateText(textureGalleryPanel.transform, "LblMet", "Metallic/Smooth", new Vector2(0, -360), new Vector2(120, 20), TextAnchor.MiddleCenter, 14);
+        RawImage imgMetallic = CreateRawImage(textureGalleryPanel.transform, "ImgMetallic", new Vector2(0, -430));
+        CreateText(textureGalleryPanel.transform, "LblEmi", "Emission", new Vector2(0, -510), new Vector2(120, 20), TextAnchor.MiddleCenter, 14);
+        RawImage imgEmission = CreateRawImage(textureGalleryPanel.transform, "ImgEmission", new Vector2(0, -580));
+
         // Estadístiques
-        CreateText(controlsPanel.transform, "LblStats", "Estadístiques:", new Vector2(20, -250), new Vector2(360, 40), TextAnchor.MiddleLeft, 24);
-        Text statsText = CreateText(controlsPanel.transform, "StatsText", "Calculant...", new Vector2(20, -420), new Vector2(360, 250), TextAnchor.UpperLeft, 18);
+        CreateText(controlsPanel.transform, "LblStats", "Estadístiques:", new Vector2(20, -300), new Vector2(360, 40), TextAnchor.MiddleLeft, 24);
+        Text statsText = CreateText(controlsPanel.transform, "StatsText", "Calculant...", new Vector2(20, -460), new Vector2(360, 250), TextAnchor.UpperLeft, 18);
         
         // Aquests es connectaran per codi durant el Start perquè el MaterialViewer es crea dinàmicament
         var hook = GetOrAddComponent<StudentUIHook>(studentPanel);
@@ -204,10 +245,16 @@ public class SceneSetup : EditorWindow
         hook.metallicToggle = metallicToggle;
         hook.metallicSlider = metallicSlider;
         hook.smoothnessSlider = smoothnessSlider;
+        hook.emissionToggle = emissionToggle;
+        hook.emissionSlider = emissionSlider;
         hook.wireframeToggle = wireframeToggle;
         hook.vertexColorToggle = vertexColorToggle;
         hook.uvToggle = uvToggle;
         hook.statsText = statsText;
+        hook.imgAlbedo = imgAlbedo;
+        hook.imgNormal = imgNormal;
+        hook.imgMetallic = imgMetallic;
+        hook.imgEmission = imgEmission;
 
         // 4. Crear LoginPanel
         GameObject loginPanel = CreatePanel(canvasObj.transform, "LoginPanel", new Color(0.2f, 0.2f, 0.2f, 0.95f), new Vector2(0.35f, 0.35f), new Vector2(0.65f, 0.65f));
@@ -263,6 +310,19 @@ public class SceneSetup : EditorWindow
         rect.offsetMin = Vector2.zero;
         rect.offsetMax = Vector2.zero;
         return panel;
+    }
+
+    private static RawImage CreateRawImage(Transform parent, string name, Vector2 pos)
+    {
+        GameObject go = new GameObject(name, typeof(RectTransform));
+        go.transform.SetParent(parent, false);
+        RawImage img = go.AddComponent<RawImage>();
+        img.color = new Color(0.15f, 0.15f, 0.15f, 1f); // Gris fosc de fons si no hi ha textura
+        img.raycastTarget = false;
+        RectTransform rect = go.GetComponent<RectTransform>();
+        rect.anchoredPosition = pos;
+        rect.sizeDelta = new Vector2(120, 120);
+        return img;
     }
 
     private static InputField CreateInputField(Transform parent, string name, Vector2 pos)
