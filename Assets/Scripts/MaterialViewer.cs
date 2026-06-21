@@ -18,6 +18,7 @@ public class MaterialViewer : MonoBehaviour
 
     private Dictionary<Material, OriginalMaterialData> originalData = new Dictionary<Material, OriginalMaterialData>();
     private List<Material> allMaterials = new List<Material>();
+    private Dictionary<Renderer, Texture2D> generatedUVs = new Dictionary<Renderer, Texture2D>();
 
     private Dictionary<Renderer, Material[]> originalMaterials = new Dictionary<Renderer, Material[]>();
     private Material vertexColorMaterial;
@@ -320,12 +321,14 @@ public class MaterialViewer : MonoBehaviour
     {
         if (mf == null || mf.sharedMesh == null || !mf.sharedMesh.isReadable) return;
         CreateUVLayoutObject(mf.sharedMesh, mf.gameObject);
+        generatedUVs[mf.GetComponent<Renderer>()] = CreateUVTexture(mf.sharedMesh);
     }
 
     private void GenerateUVLayout(SkinnedMeshRenderer smr)
     {
         if (smr == null || smr.sharedMesh == null || !smr.sharedMesh.isReadable) return;
         CreateUVLayoutObject(smr.sharedMesh, smr.gameObject);
+        generatedUVs[smr] = CreateUVTexture(smr.sharedMesh);
     }
 
     private void CreateUVLayoutObject(Mesh originalMesh, GameObject sourceObject)
@@ -385,5 +388,65 @@ public class MaterialViewer : MonoBehaviour
 
         layoutObj.SetActive(false);
         uvLayoutObjects.Add(layoutObj);
+    }
+
+    private Texture2D CreateUVTexture(Mesh originalMesh)
+    {
+        int size = 512;
+        Texture2D tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
+        
+        // Fill background
+        Color[] pixels = new Color[size * size];
+        Color bgColor = new Color(0.1f, 0.1f, 0.1f, 1f);
+        for(int i=0; i<pixels.Length; i++) pixels[i] = bgColor;
+        tex.SetPixels(pixels);
+        
+        Vector2[] uvs = originalMesh.uv;
+        int[] tris = originalMesh.triangles;
+        if (uvs != null && uvs.Length > 0 && tris != null && tris.Length > 0)
+        {
+            Color lineColor = new Color(0.8f, 0.8f, 0.8f, 1f);
+            for (int i = 0; i < tris.Length; i += 3)
+            {
+                DrawLine(tex, uvs[tris[i]], uvs[tris[i + 1]], lineColor, size);
+                DrawLine(tex, uvs[tris[i + 1]], uvs[tris[i + 2]], lineColor, size);
+                DrawLine(tex, uvs[tris[i + 2]], uvs[tris[i]], lineColor, size);
+            }
+        }
+        tex.Apply();
+        return tex;
+    }
+
+    private void DrawLine(Texture2D tex, Vector2 p1, Vector2 p2, Color col, int size)
+    {
+        int x0 = (int)(p1.x * size);
+        int y0 = (int)(p1.y * size);
+        int x1 = (int)(p2.x * size);
+        int y1 = (int)(p2.y * size);
+
+        int dx = Mathf.Abs(x1 - x0);
+        int dy = Mathf.Abs(y1 - y0);
+        int sx = x0 < x1 ? 1 : -1;
+        int sy = y0 < y1 ? 1 : -1;
+        int err = dx - dy;
+
+        while (true)
+        {
+            if (x0 >= 0 && x0 < size && y0 >= 0 && y0 < size)
+                tex.SetPixel(x0, y0, col);
+
+            if (x0 == x1 && y0 == y1) break;
+            int e2 = 2 * err;
+            if (e2 > -dy)
+            {
+                err -= dy;
+                x0 += sx;
+            }
+            if (e2 < dx)
+            {
+                err += dx;
+                y0 += sy;
+            }
+        }
     }
 }
