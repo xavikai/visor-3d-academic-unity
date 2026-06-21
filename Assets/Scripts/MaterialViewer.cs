@@ -269,16 +269,29 @@ public class MaterialViewer : MonoBehaviour
         uvMesh.SetIndices(lineIndices, MeshTopology.Lines, 0);
 
         GameObject layoutObj = new GameObject(sourceObject.name + "_UVLayout");
-        layoutObj.transform.SetParent(this.transform);
+        layoutObj.transform.SetParent(Camera.main.transform, false);
         
-        // Col·loquem el mapa UV a la dreta (+X)
-        layoutObj.transform.localPosition = new Vector3(2f, 0, 0); 
+        // Col·loquem el mapa UV enganxat a la càmera (com si fos UI plana a la dreta)
+        layoutObj.transform.localPosition = new Vector3(1.5f, 0f, 3f); 
         layoutObj.transform.localRotation = Quaternion.identity;
+        layoutObj.transform.localScale = new Vector3(1.5f, 1.5f, 1f);
 
         MeshFilter newMf = layoutObj.AddComponent<MeshFilter>();
         newMf.sharedMesh = uvMesh;
         MeshRenderer newMr = layoutObj.AddComponent<MeshRenderer>();
         newMr.material = wireframeMaterial;
+
+        // Fons fosc perquè sembli un panell de debò
+        GameObject bgObj = GameObject.CreatePrimitive(PrimitiveType.Quad);
+        bgObj.transform.SetParent(layoutObj.transform, false);
+        bgObj.transform.localPosition = new Vector3(0, 0, 0.05f); // Una mica enrere perquè les línies es vegin per davant
+        bgObj.transform.localScale = new Vector3(1.05f, 1.05f, 1f); // 5% de marge
+        Destroy(bgObj.GetComponent<Collider>());
+        MeshRenderer bgMr = bgObj.GetComponent<MeshRenderer>();
+        Material bgMat = new Material(Shader.Find("Universal Render Pipeline/Unlit"));
+        if (bgMat == null) bgMat = new Material(Shader.Find("UI/Default"));
+        bgMat.color = new Color(0.1f, 0.1f, 0.1f, 1f); // Gris molt fosc
+        bgMr.material = bgMat;
 
         layoutObj.SetActive(false);
         uvLayoutObjects.Add(layoutObj);
