@@ -230,6 +230,24 @@ public class SceneSetup : EditorWindow
         RawImage imgMetallic = CreateRawImage(textureGalleryPanel.transform, "ImgMetallic", new Vector2(0, -430));
         CreateText(textureGalleryPanel.transform, "LblEmi", "Emission", new Vector2(0, -510), new Vector2(120, 20), TextAnchor.MiddleCenter, 14);
         RawImage imgEmission = CreateRawImage(textureGalleryPanel.transform, "ImgEmission", new Vector2(0, -580));
+        CreateText(textureGalleryPanel.transform, "LblUv", "UV Layout", new Vector2(0, -660), new Vector2(120, 20), TextAnchor.MiddleCenter, 14);
+        RawImage imgUv = CreateRawImage(textureGalleryPanel.transform, "ImgUv", new Vector2(0, -730));
+
+        // Assignar Shader desempaquetador al Normal Map
+        Shader normalShader = Shader.Find("UI/NormalUnpack");
+        if (normalShader != null)
+        {
+            Material normalMat = new Material(normalShader);
+            imgNormal.material = normalMat;
+        }
+
+        // Panell de Zoom per textures
+        GameObject zoomPanel = CreatePanel(canvasObj.transform, "TextureZoomPanel", new Color(0, 0, 0, 0.95f), new Vector2(0, 0), new Vector2(1, 1));
+        Text zoomTitle = CreateText(zoomPanel.transform, "ZoomTitle", "Nom Textura", new Vector2(0, 450), new Vector2(800, 50), TextAnchor.MiddleCenter, 32);
+        RawImage imgZoom = CreateRawImage(zoomPanel.transform, "ImgZoom", new Vector2(0, -20));
+        imgZoom.GetComponent<RectTransform>().sizeDelta = new Vector2(800, 800);
+        Button btnCloseZoom = zoomPanel.AddComponent<Button>();
+        zoomPanel.SetActive(false);
 
         // Estadístiques
         CreateText(controlsPanel.transform, "LblStats", "Estadístiques:", new Vector2(20, -300), new Vector2(360, 40), TextAnchor.MiddleLeft, 24);
@@ -255,6 +273,12 @@ public class SceneSetup : EditorWindow
         hook.imgNormal = imgNormal;
         hook.imgMetallic = imgMetallic;
         hook.imgEmission = imgEmission;
+        hook.imgUv = imgUv;
+        
+        hook.zoomPanel = zoomPanel;
+        hook.imgZoom = imgZoom;
+        hook.zoomTitle = zoomTitle;
+        hook.btnCloseZoom = btnCloseZoom;
 
         // 4. Crear LoginPanel
         GameObject loginPanel = CreatePanel(canvasObj.transform, "LoginPanel", new Color(0.2f, 0.2f, 0.2f, 0.95f), new Vector2(0.35f, 0.35f), new Vector2(0.65f, 0.65f));
@@ -318,7 +342,8 @@ public class SceneSetup : EditorWindow
         go.transform.SetParent(parent, false);
         RawImage img = go.AddComponent<RawImage>();
         img.color = new Color(0.15f, 0.15f, 0.15f, 1f); // Gris fosc de fons si no hi ha textura
-        img.raycastTarget = false;
+        img.raycastTarget = true;
+        go.AddComponent<Button>(); // Botó per ampliar
         RectTransform rect = go.GetComponent<RectTransform>();
         rect.anchoredPosition = pos;
         rect.sizeDelta = new Vector2(120, 120);

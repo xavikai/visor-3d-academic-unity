@@ -9,6 +9,7 @@ public class MaterialViewer : MonoBehaviour
         public Texture bumpMap;
         public Texture metallicGlossMap;
         public Texture emissionMap;
+        public Texture uvMap;
         public float bumpScale = 1f;
         public float metallic = 0f;
         public float smoothness = 0.5f;
@@ -89,6 +90,8 @@ public class MaterialViewer : MonoBehaviour
                     
                     if (m.HasProperty("_EmissionMap")) data.emissionMap = m.GetTexture("_EmissionMap");
                     if (m.HasProperty("_EmissionColor")) data.emissionColor = m.GetColor("_EmissionColor");
+
+                    if (generatedUVs.ContainsKey(r)) data.uvMap = generatedUVs[r];
 
                     originalData[m] = data;
                     allMaterials.Add(m);

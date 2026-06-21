@@ -23,6 +23,12 @@ public class StudentUIHook : MonoBehaviour
     public RawImage imgNormal;
     public RawImage imgMetallic;
     public RawImage imgEmission;
+    public RawImage imgUv;
+
+    public GameObject zoomPanel;
+    public RawImage imgZoom;
+    public Text zoomTitle;
+    public Button btnCloseZoom;
 
     void Start()
     {
@@ -41,6 +47,14 @@ public class StudentUIHook : MonoBehaviour
         
         if (modelDropdown != null) modelDropdown.onValueChanged.AddListener(OnModelSelected);
         
+        if (btnCloseZoom != null) btnCloseZoom.onClick.AddListener(CloseZoom);
+        
+        SetupZoomButton(imgAlbedo, "Albedo");
+        SetupZoomButton(imgNormal, "Normal Map");
+        SetupZoomButton(imgMetallic, "Metallic / Smoothness");
+        SetupZoomButton(imgEmission, "Emission");
+        SetupZoomButton(imgUv, "UV Layout");
+
         UpdateStats();
         Invoke("UpdateTextureGallery", 0.5f); // Donem mig segon perquè s'inicialitzi el model actiu
     }
@@ -56,6 +70,7 @@ public class StudentUIHook : MonoBehaviour
             SetTexture(imgNormal, data.bumpMap);
             SetTexture(imgMetallic, data.metallicGlossMap);
             SetTexture(imgEmission, data.emissionMap);
+            SetTexture(imgUv, data.uvMap);
         }
         else
         {
@@ -63,6 +78,7 @@ public class StudentUIHook : MonoBehaviour
             SetTexture(imgNormal, null);
             SetTexture(imgMetallic, null);
             SetTexture(imgEmission, null);
+            SetTexture(imgUv, null);
         }
     }
 
@@ -71,6 +87,35 @@ public class StudentUIHook : MonoBehaviour
         if (img == null) return;
         img.texture = tex;
         img.color = tex != null ? Color.white : new Color(0.15f, 0.15f, 0.15f, 1f);
+    }
+
+    private void SetupZoomButton(RawImage img, string title)
+    {
+        if (img != null)
+        {
+            Button btn = img.GetComponent<Button>();
+            if (btn != null)
+            {
+                btn.onClick.AddListener(() => OpenZoom(img.texture, title, img.material));
+            }
+        }
+    }
+
+    private void OpenZoom(Texture tex, string title, Material mat)
+    {
+        if (tex == null || zoomPanel == null) return;
+        
+        zoomTitle.text = title;
+        imgZoom.texture = tex;
+        imgZoom.material = mat; // Copia el material desempaquetador si n'hi ha (Normal Map)
+        imgZoom.color = Color.white;
+        
+        zoomPanel.SetActive(true);
+    }
+
+    private void CloseZoom()
+    {
+        if (zoomPanel != null) zoomPanel.SetActive(false);
     }
 
     public void UpdateStats()
