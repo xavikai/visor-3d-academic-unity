@@ -10,7 +10,7 @@ public class Evaluator : MonoBehaviour
     {
         if (rubricConfig == null) return;
 
-        int budget = rubricConfig.budgetEstablert;
+        int budget = rubricConfig.GetCurrentBudget();
         
         if (triangles <= budget)
         {

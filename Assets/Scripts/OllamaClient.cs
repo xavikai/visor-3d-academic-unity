@@ -21,8 +21,6 @@ public class OllamaClient : MonoBehaviour
     {
         if (reportTextUI != null) reportTextUI.text = "Generant informe...";
 
-        string ollamaUrl = "http://localhost:11434/api/generate";
-
         string prompt = $"{rubricConfig.promptQualitatiu}\n" +
                         $"Dades tècniques:\n" +
                         $"- Vèrtexs: {vertices}\n" +
@@ -34,7 +32,7 @@ public class OllamaClient : MonoBehaviour
         prompt = prompt.Replace("\"", "\\\"");
         prompt = prompt.Replace("\n", "\\n");
 
-        string jsonPayload = $"{{\"model\": \"llama3\", \"prompt\": \"{prompt}\", \"stream\": false}}";
+        string jsonPayload = $"{{\"model\": \"{modelName}\", \"prompt\": \"{prompt}\", \"stream\": false}}";
 
         using (UnityWebRequest request = new UnityWebRequest(ollamaUrl, "POST"))
         {
