@@ -210,7 +210,7 @@ public class SceneSetup : EditorWindow
         wireframeToggle.isOn = false;
         Toggle vertexColorToggle = CreateToggle(controlsPanel.transform, "VertexColorToggle", "Vertex Colors", new Vector2(0, -190));
         vertexColorToggle.isOn = false;
-        Toggle uvToggle = CreateToggle(controlsPanel.transform, "UvToggle", "Mostrar UVs", new Vector2(0, -240));
+        Toggle uvToggle = CreateToggle(controlsPanel.transform, "UvToggle", "UV Checker", new Vector2(0, -240));
         uvToggle.isOn = false;
 
         // Panell de Textures (Galeria 2D) a la dreta
@@ -220,18 +220,22 @@ public class SceneSetup : EditorWindow
         tgRect.anchoredPosition = new Vector2(0, 0);
         tgRect.sizeDelta = new Vector2(140, 0); // 140 width, full height
         
-        CreateText(textureGalleryPanel.transform, "LblGallery", "Textures 2D", new Vector2(0, -20), new Vector2(140, 30), TextAnchor.UpperCenter, 18);
+        CreateText(textureGalleryPanel.transform, "LblGallery", "Textures 2D", new Vector2(0, 480), new Vector2(140, 30), TextAnchor.UpperCenter, 18);
         
-        CreateText(textureGalleryPanel.transform, "LblAlb", "Albedo", new Vector2(0, -60), new Vector2(120, 20), TextAnchor.MiddleCenter, 14);
-        RawImage imgAlbedo = CreateRawImage(textureGalleryPanel.transform, "ImgAlbedo", new Vector2(0, -130));
-        CreateText(textureGalleryPanel.transform, "LblNrm", "Normal", new Vector2(0, -210), new Vector2(120, 20), TextAnchor.MiddleCenter, 14);
-        RawImage imgNormal = CreateRawImage(textureGalleryPanel.transform, "ImgNormal", new Vector2(0, -280));
-        CreateText(textureGalleryPanel.transform, "LblMet", "Metallic/Smooth", new Vector2(0, -360), new Vector2(120, 20), TextAnchor.MiddleCenter, 14);
-        RawImage imgMetallic = CreateRawImage(textureGalleryPanel.transform, "ImgMetallic", new Vector2(0, -430));
-        CreateText(textureGalleryPanel.transform, "LblEmi", "Emission", new Vector2(0, -510), new Vector2(120, 20), TextAnchor.MiddleCenter, 14);
-        RawImage imgEmission = CreateRawImage(textureGalleryPanel.transform, "ImgEmission", new Vector2(0, -580));
-        CreateText(textureGalleryPanel.transform, "LblUv", "UV Layout", new Vector2(0, -660), new Vector2(120, 20), TextAnchor.MiddleCenter, 14);
-        RawImage imgUv = CreateRawImage(textureGalleryPanel.transform, "ImgUv", new Vector2(0, -730));
+        CreateText(textureGalleryPanel.transform, "LblUv", "UV Layout", new Vector2(0, 440), new Vector2(120, 20), TextAnchor.MiddleCenter, 14);
+        RawImage imgUv = CreateRawImage(textureGalleryPanel.transform, "ImgUv", new Vector2(0, 370));
+
+        CreateText(textureGalleryPanel.transform, "LblAlb", "Albedo", new Vector2(0, 280), new Vector2(120, 20), TextAnchor.MiddleCenter, 14);
+        RawImage imgAlbedo = CreateRawImage(textureGalleryPanel.transform, "ImgAlbedo", new Vector2(0, 210));
+        
+        CreateText(textureGalleryPanel.transform, "LblNrm", "Normal", new Vector2(0, 120), new Vector2(120, 20), TextAnchor.MiddleCenter, 14);
+        RawImage imgNormal = CreateRawImage(textureGalleryPanel.transform, "ImgNormal", new Vector2(0, 50));
+        
+        CreateText(textureGalleryPanel.transform, "LblMet", "Metallic/Smooth", new Vector2(0, -40), new Vector2(120, 20), TextAnchor.MiddleCenter, 14);
+        RawImage imgMetallic = CreateRawImage(textureGalleryPanel.transform, "ImgMetallic", new Vector2(0, -110));
+        
+        CreateText(textureGalleryPanel.transform, "LblEmi", "Emission", new Vector2(0, -200), new Vector2(120, 20), TextAnchor.MiddleCenter, 14);
+        RawImage imgEmission = CreateRawImage(textureGalleryPanel.transform, "ImgEmission", new Vector2(0, -270));
 
         // Assignar Shader desempaquetador al Normal Map
         Shader normalShader = Shader.Find("UI/NormalUnpack");

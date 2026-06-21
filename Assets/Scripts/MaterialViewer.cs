@@ -25,9 +25,6 @@ public class MaterialViewer : MonoBehaviour
     private bool isVertexColorMode = false;
 
     private List<GameObject> wireframeObjects = new List<GameObject>();
-    private Material wireframeMaterial;
-
-    private List<GameObject> uvLayoutObjects = new List<GameObject>();
     private Material checkerboardMaterial;
     private bool isUvMode = false;
 
@@ -262,11 +259,6 @@ public class MaterialViewer : MonoBehaviour
     {
         isUvMode = state;
         UpdateMaterials();
-
-        foreach (var u in uvLayoutObjects)
-        {
-            if (u != null) u.SetActive(state);
-        }
     }
 
     private void UpdateMaterials()
@@ -320,75 +312,15 @@ public class MaterialViewer : MonoBehaviour
     private void GenerateUVLayout(MeshFilter mf)
     {
         if (mf == null || mf.sharedMesh == null || !mf.sharedMesh.isReadable) return;
-        CreateUVLayoutObject(mf.sharedMesh, mf.gameObject);
         generatedUVs[mf.GetComponent<Renderer>()] = CreateUVTexture(mf.sharedMesh);
     }
 
     private void GenerateUVLayout(SkinnedMeshRenderer smr)
     {
         if (smr == null || smr.sharedMesh == null || !smr.sharedMesh.isReadable) return;
-        CreateUVLayoutObject(smr.sharedMesh, smr.gameObject);
         generatedUVs[smr] = CreateUVTexture(smr.sharedMesh);
     }
 
-    private void CreateUVLayoutObject(Mesh originalMesh, GameObject sourceObject)
-    {
-        Vector2[] uvs = originalMesh.uv;
-        if (uvs == null || uvs.Length == 0) return;
-
-        Mesh uvMesh = new Mesh();
-        uvMesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
-
-        Vector3[] newVertices = new Vector3[uvs.Length];
-        for (int i = 0; i < uvs.Length; i++)
-        {
-            // UV [0,1] -> [-0.5, 0.5] escalat x2 -> mida física 1 metre a prop del model
-            newVertices[i] = new Vector3((uvs[i].x - 0.5f) * 2f, (uvs[i].y - 0.5f) * 2f, 0); 
-        }
-        uvMesh.vertices = newVertices;
-
-        int[] originalTriangles = originalMesh.triangles;
-        int[] lineIndices = new int[originalTriangles.Length * 2];
-        int lineIdx = 0;
-        for (int i = 0; i < originalTriangles.Length; i += 3)
-        {
-            lineIndices[lineIdx++] = originalTriangles[i];
-            lineIndices[lineIdx++] = originalTriangles[i + 1];
-            lineIndices[lineIdx++] = originalTriangles[i + 1];
-            lineIndices[lineIdx++] = originalTriangles[i + 2];
-            lineIndices[lineIdx++] = originalTriangles[i + 2];
-            lineIndices[lineIdx++] = originalTriangles[i];
-        }
-        uvMesh.SetIndices(lineIndices, MeshTopology.Lines, 0);
-
-        GameObject layoutObj = new GameObject(sourceObject.name + "_UVLayout");
-        layoutObj.transform.SetParent(Camera.main.transform, false);
-        
-        // Col·loquem el mapa UV enganxat a la càmera (com si fos UI plana a la dreta)
-        layoutObj.transform.localPosition = new Vector3(1.5f, 0f, 3f); 
-        layoutObj.transform.localRotation = Quaternion.identity;
-        layoutObj.transform.localScale = new Vector3(1.5f, 1.5f, 1f);
-
-        MeshFilter newMf = layoutObj.AddComponent<MeshFilter>();
-        newMf.sharedMesh = uvMesh;
-        MeshRenderer newMr = layoutObj.AddComponent<MeshRenderer>();
-        newMr.material = wireframeMaterial;
-
-        // Fons fosc perquè sembli un panell de debò
-        GameObject bgObj = GameObject.CreatePrimitive(PrimitiveType.Quad);
-        bgObj.transform.SetParent(layoutObj.transform, false);
-        bgObj.transform.localPosition = new Vector3(0, 0, 0.05f); // Una mica enrere perquè les línies es vegin per davant
-        bgObj.transform.localScale = new Vector3(2.1f, 2.1f, 1f); // El layout fa 2x2 metres, doncs 2.1 per tenir marge
-        Destroy(bgObj.GetComponent<Collider>());
-        MeshRenderer bgMr = bgObj.GetComponent<MeshRenderer>();
-        Material bgMat = new Material(Shader.Find("Universal Render Pipeline/Unlit"));
-        if (bgMat == null) bgMat = new Material(Shader.Find("UI/Default"));
-        bgMat.color = new Color(0.1f, 0.1f, 0.1f, 0.85f); // Gris fosc lleugerament transparent
-        bgMr.material = bgMat;
-
-        layoutObj.SetActive(false);
-        uvLayoutObjects.Add(layoutObj);
-    }
 
     private Texture2D CreateUVTexture(Mesh originalMesh)
     {
