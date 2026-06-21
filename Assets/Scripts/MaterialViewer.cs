@@ -58,12 +58,10 @@ public class MaterialViewer : MonoBehaviour
 
             if (r is MeshRenderer)
             {
-                GenerateWireframe(r.GetComponent<MeshFilter>());
                 GenerateUVLayout(r.GetComponent<MeshFilter>());
             }
             else if (r is SkinnedMeshRenderer)
             {
-                GenerateWireframe(r as SkinnedMeshRenderer);
                 GenerateUVLayout(r as SkinnedMeshRenderer);
             }
 
