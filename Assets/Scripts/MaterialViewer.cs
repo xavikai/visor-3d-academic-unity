@@ -86,7 +86,7 @@ public class MaterialViewer : MonoBehaviour
         MeshFilter[] filters = GetComponentsInChildren<MeshFilter>(true);
         foreach (MeshFilter mf in filters)
         {
-            if (mf.gameObject.name == "WireframeOverlay" || mf.sharedMesh == null) continue;
+            if (mf.gameObject.name == "WireframeOverlay" || mf.gameObject.name.EndsWith("_UVLayout") || mf.sharedMesh == null) continue;
 
             Mesh original = mf.sharedMesh;
             Mesh wireMesh = new Mesh();
