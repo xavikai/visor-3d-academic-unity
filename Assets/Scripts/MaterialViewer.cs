@@ -13,14 +13,27 @@ public class MaterialViewer : MonoBehaviour
     private Dictionary<Material, OriginalMaterialData> originalData = new Dictionary<Material, OriginalMaterialData>();
     private List<Material> allMaterials = new List<Material>();
 
+    private List<GameObject> wireframeObjects = new List<GameObject>();
+    private Material wireframeMaterial;
+
     public void Initialize()
     {
         originalData.Clear();
         allMaterials.Clear();
+        
+        foreach(var w in wireframeObjects) if(w!=null) Destroy(w);
+        wireframeObjects.Clear();
+
+        // Podem utilitzar un Unlit bàsic de color per defecte (verd o negre)
+        wireframeMaterial = new Material(Shader.Find("Universal Render Pipeline/Unlit"));
+        if (wireframeMaterial != null) wireframeMaterial.color = Color.cyan;
 
         Renderer[] renderers = GetComponentsInChildren<Renderer>(true);
         foreach (Renderer r in renderers)
         {
+            // Ometem els propis wireframes que acabem de crear (tot i que els hem destruït, però per seguretat)
+            if (r.name == "WireframeOverlay") continue;
+
             foreach (Material m in r.materials)
             {
                 if (!originalData.ContainsKey(m))
@@ -34,6 +47,49 @@ public class MaterialViewer : MonoBehaviour
                     allMaterials.Add(m);
                 }
             }
+        }
+
+        // Generar Wireframes
+        MeshFilter[] filters = GetComponentsInChildren<MeshFilter>(true);
+        foreach (MeshFilter mf in filters)
+        {
+            if (mf.gameObject.name == "WireframeOverlay" || mf.sharedMesh == null) continue;
+
+            Mesh original = mf.sharedMesh;
+            Mesh wireMesh = new Mesh();
+            wireMesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
+            wireMesh.vertices = original.vertices;
+            
+            int[] triangles = original.triangles;
+            int[] lines = new int[triangles.Length * 2];
+            int lineIndex = 0;
+            for (int i = 0; i < triangles.Length; i += 3)
+            {
+                lines[lineIndex++] = triangles[i];
+                lines[lineIndex++] = triangles[i + 1];
+                lines[lineIndex++] = triangles[i + 1];
+                lines[lineIndex++] = triangles[i + 2];
+                lines[lineIndex++] = triangles[i + 2];
+                lines[lineIndex++] = triangles[i];
+            }
+            wireMesh.SetIndices(lines, MeshTopology.Lines, 0);
+
+            GameObject wireObj = new GameObject("WireframeOverlay");
+            wireObj.transform.SetParent(mf.transform, false);
+            wireObj.transform.localPosition = Vector3.zero;
+            wireObj.transform.localRotation = Quaternion.identity;
+            wireObj.transform.localScale = Vector3.one;
+
+            MeshFilter wireMf = wireObj.AddComponent<MeshFilter>();
+            wireMf.sharedMesh = wireMesh;
+            MeshRenderer wireMr = wireObj.AddComponent<MeshRenderer>();
+            wireMr.material = wireframeMaterial;
+
+            // Ajust fi per evitar z-fighting: movem l'objecte de wireframe una miqueta
+            // cap a la càmera. Al ser un visor bàsic potser no cal, però ajuda.
+            
+            wireObj.SetActive(false);
+            wireframeObjects.Add(wireObj);
         }
     }
 
@@ -61,6 +117,14 @@ public class MaterialViewer : MonoBehaviour
         {
             if (m.HasProperty("_MetallicGlossMap"))
                 m.SetTexture("_MetallicGlossMap", state ? originalData[m].metallicGlossMap : null);
+        }
+    }
+
+    public void ToggleWireframe(bool state)
+    {
+        foreach (var w in wireframeObjects)
+        {
+            if (w != null) w.SetActive(state);
         }
     }
 }

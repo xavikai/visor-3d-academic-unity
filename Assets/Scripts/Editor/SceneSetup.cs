@@ -100,6 +100,8 @@ public class SceneSetup : EditorWindow
         Toggle albedoToggle = CreateToggle(controlsPanel.transform, "AlbedoToggle", "Color (Albedo)", new Vector2(125, -220));
         Toggle normalToggle = CreateToggle(controlsPanel.transform, "NormalToggle", "Relleu (Normal Map)", new Vector2(125, -260));
         Toggle metallicToggle = CreateToggle(controlsPanel.transform, "MetallicToggle", "Metall/Rugositat", new Vector2(125, -300));
+        Toggle wireframeToggle = CreateToggle(controlsPanel.transform, "WireframeToggle", "Malla (Wireframe)", new Vector2(125, -340));
+        wireframeToggle.isOn = false;
         
         // Aquests es connectaran per codi durant el Start perquè el MaterialViewer es crea dinàmicament
         var hook = GetOrAddComponent<StudentUIHook>(studentPanel);
@@ -107,6 +109,7 @@ public class SceneSetup : EditorWindow
         hook.albedoToggle = albedoToggle;
         hook.normalToggle = normalToggle;
         hook.metallicToggle = metallicToggle;
+        hook.wireframeToggle = wireframeToggle;
 
         // 4. Crear LoginPanel
         GameObject loginPanel = CreatePanel(canvasObj.transform, "LoginPanel", new Color(0.2f, 0.2f, 0.2f, 0.95f), new Vector2(0.35f, 0.35f), new Vector2(0.65f, 0.65f));
