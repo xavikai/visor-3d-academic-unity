@@ -61,9 +61,13 @@ public class OrbitCamera : MonoBehaviour
             {
                 Vector3 right = transform.right;
                 Vector3 up = transform.up;
-                // Ajustem la sensibilitat del pan segons la distància perquè sembli consistent
-                float adjustedPanSens = panSensitivity * currentDistance;
-                targetPan -= (right * delta.x + up * delta.y) * adjustedPanSens;
+                
+                // Pan 1:1 matemàticament perfecte
+                float fov = Camera.main != null ? Camera.main.fieldOfView : 60f;
+                float heightAtDistance = 2.0f * currentDistance * Mathf.Tan(fov * 0.5f * Mathf.Deg2Rad);
+                float panSens = heightAtDistance / Screen.height;
+                
+                targetPan -= (right * delta.x + up * delta.y) * panSens;
             }
 
             // Zoom (Rodeta)
