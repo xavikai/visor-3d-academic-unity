@@ -70,8 +70,10 @@ public class OrbitCamera : MonoBehaviour
             Vector2 scroll = Mouse.current.scroll.ReadValue();
             if (scroll.y != 0)
             {
-                targetDistance -= scroll.y * zoomSensitivity * 0.01f;
-                targetDistance = Mathf.Clamp(targetDistance, 0.5f, 50f);
+                // El zoom s'escala logarítmicament segons la distància perquè sigui precís en objectes minúsculs i ràpid en gegants
+                float adjustedZoomSens = zoomSensitivity * currentDistance * 0.005f;
+                targetDistance -= scroll.y * adjustedZoomSens;
+                targetDistance = Mathf.Clamp(targetDistance, 0.01f, 5000f);
             }
 
             // Aplicar inèrcia (Damping)
@@ -92,7 +94,7 @@ public class OrbitCamera : MonoBehaviour
 
     public void ResetView(float newDistance)
     {
-        targetDistance = Mathf.Clamp(newDistance, 0.5f, 500f);
+        targetDistance = Mathf.Clamp(newDistance, 0.01f, 5000f);
         currentDistance = targetDistance; // Aplicar a l'instant
         targetPan = Vector3.zero;
         currentPan = Vector3.zero; // Aplicar a l'instant
