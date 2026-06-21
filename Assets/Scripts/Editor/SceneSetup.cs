@@ -30,6 +30,14 @@ public class SceneSetup : EditorWindow
         evaluator.rubricConfig = rubricConfig;
         evaluator.ollamaClient = ollamaClient;
 
+        // Afegir Càmera Orbital
+        Camera mainCam = Camera.main;
+        if (mainCam != null)
+        {
+            var orbit = GetOrAddComponent<OrbitCamera>(mainCam.gameObject);
+            orbit.target = modelLoaderObj.transform;
+        }
+
         // 2. Crear Canvas i EventSystem
         Canvas canvas = Object.FindAnyObjectByType<Canvas>();
         GameObject canvasObj;
@@ -83,8 +91,8 @@ public class SceneSetup : EditorWindow
         Image img = panel.AddComponent<Image>();
         img.color = color;
         RectTransform rect = panel.GetComponent<RectTransform>();
-        rect.anchorMin = Vector2.zero;
-        rect.anchorMax = Vector2.one;
+        rect.anchorMin = new Vector2(0.2f, 0.2f);
+        rect.anchorMax = new Vector2(0.8f, 0.8f);
         rect.offsetMin = Vector2.zero;
         rect.offsetMax = Vector2.zero;
         return panel;
