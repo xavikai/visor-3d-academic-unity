@@ -113,11 +113,11 @@ public class SceneSetup : EditorWindow
 
     private static InputField CreateInputField(Transform parent, string name, Vector2 pos)
     {
-        GameObject go = new GameObject(name);
+        GameObject go = new GameObject(name, typeof(RectTransform));
         go.transform.SetParent(parent, false);
         var input = go.AddComponent<InputField>();
         
-        GameObject textGo = new GameObject("Text");
+        GameObject textGo = new GameObject("Text", typeof(RectTransform));
         textGo.transform.SetParent(go.transform, false);
         var text = textGo.AddComponent<Text>();
         text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
@@ -139,11 +139,11 @@ public class SceneSetup : EditorWindow
 
     private static Button CreateButton(Transform parent, string name, string labelText, Vector2 pos)
     {
-        GameObject go = new GameObject(name);
+        GameObject go = new GameObject(name, typeof(RectTransform));
         go.transform.SetParent(parent, false);
         var btn = go.AddComponent<Button>();
         
-        GameObject textGo = new GameObject("Text");
+        GameObject textGo = new GameObject("Text", typeof(RectTransform));
         textGo.transform.SetParent(go.transform, false);
         var text = textGo.AddComponent<Text>();
         text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
@@ -164,7 +164,7 @@ public class SceneSetup : EditorWindow
 
     private static Text CreateText(Transform parent, string name, string labelText, Vector2 pos, Vector2 size, TextAnchor alignment)
     {
-        GameObject textGo = new GameObject(name);
+        GameObject textGo = new GameObject(name, typeof(RectTransform));
         textGo.transform.SetParent(parent, false);
         var text = textGo.AddComponent<Text>();
         text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
