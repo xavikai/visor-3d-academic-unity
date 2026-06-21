@@ -99,4 +99,31 @@ public class StudentUIHook : MonoBehaviour
         if (modelLoader != null && modelLoader.materialViewer != null)
             modelLoader.materialViewer.ToggleUV(state);
     }
+
+    private void OnNormalIntensityChanged(float value)
+    {
+        if (modelLoader != null && modelLoader.materialViewer != null)
+            modelLoader.materialViewer.SetNormalIntensity(value);
+    }
+
+    private void OnMetallicIntensityChanged(float value)
+    {
+        if (modelLoader != null && modelLoader.materialViewer != null)
+            modelLoader.materialViewer.SetMetallic(value);
+    }
+
+    private void OnSmoothnessChanged(float value)
+    {
+        if (modelLoader != null && modelLoader.materialViewer != null)
+            modelLoader.materialViewer.SetSmoothness(value);
+    }
+
+    private void OnModelSelected(int index)
+    {
+        if (modelLoader != null)
+        {
+            modelLoader.SetCurrentModel(index);
+            UpdateStats();
+        }
+    }
 }
