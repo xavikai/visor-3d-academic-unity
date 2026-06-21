@@ -114,29 +114,29 @@ public class SceneSetup : EditorWindow
         RectTransform ctrlRect = controlsPanel.GetComponent<RectTransform>();
         ctrlRect.anchorMin = new Vector2(0, 0);
         ctrlRect.anchorMax = new Vector2(0, 1);
-        ctrlRect.sizeDelta = new Vector2(250, 0); // Ample de 250px a l'esquerra
+        ctrlRect.sizeDelta = new Vector2(400, 0); // Ample de 400px a l'esquerra
 
-        CreateText(controlsPanel.transform, "Title", "Visor de l'Alumne", new Vector2(125, 120), new Vector2(200, 30), TextAnchor.MiddleCenter);
+        CreateText(controlsPanel.transform, "Title", "Visor de l'Alumne", new Vector2(200, 150), new Vector2(350, 40), TextAnchor.MiddleCenter, 32);
 
         // Toggles Model
-        CreateText(controlsPanel.transform, "LblModel", "Selecció de Model:", new Vector2(125, 70), new Vector2(200, 30), TextAnchor.MiddleLeft);
-        Toggle highpolyToggle = CreateToggle(controlsPanel.transform, "HighpolyToggle", "Mostrar Highpoly", new Vector2(125, 30));
+        CreateText(controlsPanel.transform, "LblModel", "Selecció de Model:", new Vector2(200, 80), new Vector2(350, 40), TextAnchor.MiddleLeft, 24);
+        Toggle highpolyToggle = CreateToggle(controlsPanel.transform, "HighpolyToggle", "Mostrar Highpoly", new Vector2(200, 30));
         highpolyToggle.isOn = false;
         UnityEventTools.AddPersistentListener(highpolyToggle.onValueChanged, new UnityAction<bool>(modelLoader.ToggleHighpoly));
 
         // Toggles Materials
-        CreateText(controlsPanel.transform, "LblMat", "Canals de Material:", new Vector2(125, -30), new Vector2(200, 30), TextAnchor.MiddleLeft);
-        Toggle albedoToggle = CreateToggle(controlsPanel.transform, "AlbedoToggle", "Color (Albedo)", new Vector2(125, -70));
-        Toggle normalToggle = CreateToggle(controlsPanel.transform, "NormalToggle", "Relleu (Normal Map)", new Vector2(125, -110));
-        Toggle metallicToggle = CreateToggle(controlsPanel.transform, "MetallicToggle", "Metall/Rugositat", new Vector2(125, -150));
-        Toggle wireframeToggle = CreateToggle(controlsPanel.transform, "WireframeToggle", "Malla (Wireframe)", new Vector2(125, -190));
+        CreateText(controlsPanel.transform, "LblMat", "Canals de Material:", new Vector2(200, -50), new Vector2(350, 40), TextAnchor.MiddleLeft, 24);
+        Toggle albedoToggle = CreateToggle(controlsPanel.transform, "AlbedoToggle", "Color (Albedo)", new Vector2(200, -100));
+        Toggle normalToggle = CreateToggle(controlsPanel.transform, "NormalToggle", "Relleu (Normal Map)", new Vector2(200, -150));
+        Toggle metallicToggle = CreateToggle(controlsPanel.transform, "MetallicToggle", "Metall/Rugositat", new Vector2(200, -200));
+        Toggle wireframeToggle = CreateToggle(controlsPanel.transform, "WireframeToggle", "Malla (Wireframe)", new Vector2(200, -250));
         wireframeToggle.isOn = false;
-        Toggle vertexColorToggle = CreateToggle(controlsPanel.transform, "VertexColorToggle", "Vertex Colors", new Vector2(125, -230));
+        Toggle vertexColorToggle = CreateToggle(controlsPanel.transform, "VertexColorToggle", "Vertex Colors", new Vector2(200, -300));
         vertexColorToggle.isOn = false;
 
         // Estadístiques
-        CreateText(controlsPanel.transform, "LblStats", "Estadístiques:", new Vector2(125, -280), new Vector2(200, 30), TextAnchor.MiddleLeft);
-        Text statsText = CreateText(controlsPanel.transform, "StatsText", "Calculant...", new Vector2(125, -320), new Vector2(200, 60), TextAnchor.MiddleLeft);
+        CreateText(controlsPanel.transform, "LblStats", "Estadístiques:", new Vector2(200, -380), new Vector2(350, 40), TextAnchor.MiddleLeft, 24);
+        Text statsText = CreateText(controlsPanel.transform, "StatsText", "Calculant...", new Vector2(200, -450), new Vector2(350, 100), TextAnchor.UpperLeft, 18);
         
         // Aquests es connectaran per codi durant el Start perquè el MaterialViewer es crea dinàmicament
         var hook = GetOrAddComponent<StudentUIHook>(studentPanel);
@@ -254,7 +254,7 @@ public class SceneSetup : EditorWindow
         return btn;
     }
 
-    private static Toggle CreateToggle(Transform parent, string name, string labelText, Vector2 pos)
+    private static Toggle CreateToggle(Transform parent, string name, string labelText, Vector2 pos, int fontSize = 20)
     {
         GameObject go = new GameObject(name, typeof(RectTransform));
         go.transform.SetParent(parent, false);
@@ -265,8 +265,8 @@ public class SceneSetup : EditorWindow
         var bgImage = bgGo.AddComponent<Image>();
         bgImage.color = Color.white;
         RectTransform bgRect = bgGo.GetComponent<RectTransform>();
-        bgRect.anchoredPosition = new Vector2(-80, 0);
-        bgRect.sizeDelta = new Vector2(20, 20);
+        bgRect.anchoredPosition = new Vector2(-150, 0); // Desplaçat cap a l'esquerra tenint en compte que l'amplada és 350
+        bgRect.sizeDelta = new Vector2(28, 28);
         
         GameObject checkGo = new GameObject("Checkmark", typeof(RectTransform));
         checkGo.transform.SetParent(bgGo.transform, false);
@@ -274,7 +274,7 @@ public class SceneSetup : EditorWindow
         checkImage.color = Color.black;
         RectTransform checkRect = checkGo.GetComponent<RectTransform>();
         checkRect.anchoredPosition = Vector2.zero;
-        checkRect.sizeDelta = new Vector2(14, 14);
+        checkRect.sizeDelta = new Vector2(20, 20);
         
         GameObject textGo = new GameObject("Label", typeof(RectTransform));
         textGo.transform.SetParent(go.transform, false);
@@ -283,9 +283,10 @@ public class SceneSetup : EditorWindow
         text.text = labelText;
         text.color = Color.white;
         text.alignment = TextAnchor.MiddleLeft;
+        text.fontSize = fontSize;
         RectTransform textRect = textGo.GetComponent<RectTransform>();
-        textRect.anchoredPosition = new Vector2(20, 0);
-        textRect.sizeDelta = new Vector2(180, 30);
+        textRect.anchoredPosition = new Vector2(20, 0); // El text comença a la dreta del centre
+        textRect.sizeDelta = new Vector2(280, 40);
         
         toggle.targetGraphic = bgImage;
         toggle.graphic = checkImage;
@@ -293,12 +294,12 @@ public class SceneSetup : EditorWindow
         
         RectTransform rect = go.GetComponent<RectTransform>();
         rect.anchoredPosition = pos;
-        rect.sizeDelta = new Vector2(200, 30);
+        rect.sizeDelta = new Vector2(350, 40);
 
         return toggle;
     }
 
-    private static Text CreateText(Transform parent, string name, string labelText, Vector2 pos, Vector2 size, TextAnchor alignment)
+    private static Text CreateText(Transform parent, string name, string labelText, Vector2 pos, Vector2 size, TextAnchor alignment, int fontSize = 20)
     {
         GameObject textGo = new GameObject(name, typeof(RectTransform));
         textGo.transform.SetParent(parent, false);
@@ -307,6 +308,7 @@ public class SceneSetup : EditorWindow
         text.text = labelText;
         text.color = Color.white;
         text.alignment = alignment;
+        text.fontSize = fontSize;
         
         RectTransform rect = textGo.GetComponent<RectTransform>();
         rect.anchoredPosition = pos;
