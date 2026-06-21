@@ -70,7 +70,6 @@ public class StudentUIHook : MonoBehaviour
             SetTexture(imgNormal, data.bumpMap);
             SetTexture(imgMetallic, data.metallicGlossMap);
             SetTexture(imgEmission, data.emissionMap);
-            SetTexture(imgUv, data.uvMap);
         }
         else
         {
@@ -78,8 +77,11 @@ public class StudentUIHook : MonoBehaviour
             SetTexture(imgNormal, null);
             SetTexture(imgMetallic, null);
             SetTexture(imgEmission, null);
-            SetTexture(imgUv, null);
         }
+
+        // UVs belong to the model, not just the material
+        GameObject activeModel = modelLoader.GetActiveModel();
+        SetTexture(imgUv, modelLoader.materialViewer.GetActiveModelUVs(activeModel));
     }
 
     private void SetTexture(RawImage img, Texture tex)

@@ -9,7 +9,6 @@ public class MaterialViewer : MonoBehaviour
         public Texture bumpMap;
         public Texture metallicGlossMap;
         public Texture emissionMap;
-        public Texture uvMap;
         public float bumpScale = 1f;
         public float metallic = 0f;
         public float smoothness = 0.5f;
@@ -18,7 +17,7 @@ public class MaterialViewer : MonoBehaviour
 
     private Dictionary<Material, OriginalMaterialData> originalData = new Dictionary<Material, OriginalMaterialData>();
     private List<Material> allMaterials = new List<Material>();
-    private Dictionary<Renderer, Texture2D> generatedUVs = new Dictionary<Renderer, Texture2D>();
+    private Dictionary<GameObject, Texture2D> modelUVs = new Dictionary<GameObject, Texture2D>();
 
     private Dictionary<Renderer, Material[]> originalMaterials = new Dictionary<Renderer, Material[]>();
     private Material vertexColorMaterial;
@@ -56,17 +55,6 @@ public class MaterialViewer : MonoBehaviour
         Renderer[] renderers = GetComponentsInChildren<Renderer>(true);
         foreach (Renderer r in renderers)
         {
-            if (r.name == "WireframeOverlay" || r.name.EndsWith("_UVLayout")) continue;
-
-            if (r is MeshRenderer)
-            {
-                GenerateUVLayout(r.GetComponent<MeshFilter>());
-            }
-            else if (r is SkinnedMeshRenderer)
-            {
-                GenerateUVLayout(r as SkinnedMeshRenderer);
-            }
-
             originalMaterials[r] = r.materials;
 
             foreach (Material m in r.materials)
@@ -86,8 +74,6 @@ public class MaterialViewer : MonoBehaviour
                     
                     if (m.HasProperty("_EmissionMap")) data.emissionMap = m.GetTexture("_EmissionMap");
                     if (m.HasProperty("_EmissionColor")) data.emissionColor = m.GetColor("_EmissionColor");
-
-                    if (generatedUVs.ContainsKey(r)) data.uvMap = generatedUVs[r];
 
                     originalData[m] = data;
                     allMaterials.Add(m);
@@ -307,47 +293,53 @@ public class MaterialViewer : MonoBehaviour
         return tex;
     }
 
-    private void GenerateUVLayout(MeshFilter mf)
+    public Texture2D GetActiveModelUVs(GameObject activeModel)
     {
-        if (mf == null || mf.sharedMesh == null || !mf.sharedMesh.isReadable) return;
-        generatedUVs[mf.GetComponent<Renderer>()] = CreateUVTexture(mf.sharedMesh);
-    }
+        if (activeModel == null) return null;
+        if (modelUVs.ContainsKey(activeModel)) return modelUVs[activeModel];
 
-    private void GenerateUVLayout(SkinnedMeshRenderer smr)
-    {
-        if (smr == null || smr.sharedMesh == null || !smr.sharedMesh.isReadable) return;
-        generatedUVs[smr] = CreateUVTexture(smr.sharedMesh);
-    }
-
-
-    private Texture2D CreateUVTexture(Mesh originalMesh)
-    {
         int size = 512;
         Texture2D tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
         
-        // Fill background
-        Color[] pixels = new Color[size * size];
-        Color bgColor = new Color(0.1f, 0.1f, 0.1f, 1f);
+        Color32[] pixels = new Color32[size * size];
+        Color32 bgColor = new Color32(25, 25, 25, 255);
         for(int i=0; i<pixels.Length; i++) pixels[i] = bgColor;
-        tex.SetPixels(pixels);
         
-        Vector2[] uvs = originalMesh.uv;
-        int[] tris = originalMesh.triangles;
-        if (uvs != null && uvs.Length > 0 && tris != null && tris.Length > 0)
+        Color32 lineColor = new Color32(204, 204, 204, 255);
+
+        MeshFilter[] filters = activeModel.GetComponentsInChildren<MeshFilter>(false);
+        foreach(var mf in filters)
         {
-            Color lineColor = new Color(0.8f, 0.8f, 0.8f, 1f);
-            for (int i = 0; i < tris.Length; i += 3)
-            {
-                DrawLine(tex, uvs[tris[i]], uvs[tris[i + 1]], lineColor, size);
-                DrawLine(tex, uvs[tris[i + 1]], uvs[tris[i + 2]], lineColor, size);
-                DrawLine(tex, uvs[tris[i + 2]], uvs[tris[i]], lineColor, size);
-            }
+            if (mf.sharedMesh != null) DrawMeshUVs(pixels, mf.sharedMesh, lineColor, size);
         }
+
+        SkinnedMeshRenderer[] smrs = activeModel.GetComponentsInChildren<SkinnedMeshRenderer>(false);
+        foreach(var smr in smrs)
+        {
+            if (smr.sharedMesh != null) DrawMeshUVs(pixels, smr.sharedMesh, lineColor, size);
+        }
+
+        tex.SetPixels32(pixels);
         tex.Apply();
+        modelUVs[activeModel] = tex;
         return tex;
     }
 
-    private void DrawLine(Texture2D tex, Vector2 p1, Vector2 p2, Color col, int size)
+    private void DrawMeshUVs(Color32[] pixels, Mesh mesh, Color32 col, int size)
+    {
+        Vector2[] uvs = mesh.uv;
+        int[] tris = mesh.triangles;
+        if (uvs == null || uvs.Length == 0 || tris == null || tris.Length == 0) return;
+
+        for (int i = 0; i < tris.Length; i += 3)
+        {
+            DrawLine(pixels, uvs[tris[i]], uvs[tris[i + 1]], col, size);
+            DrawLine(pixels, uvs[tris[i + 1]], uvs[tris[i + 2]], col, size);
+            DrawLine(pixels, uvs[tris[i + 2]], uvs[tris[i]], col, size);
+        }
+    }
+
+    private void DrawLine(Color32[] pixels, Vector2 p1, Vector2 p2, Color32 col, int size)
     {
         int x0 = (int)(p1.x * size);
         int y0 = (int)(p1.y * size);
@@ -363,7 +355,7 @@ public class MaterialViewer : MonoBehaviour
         while (true)
         {
             if (x0 >= 0 && x0 < size && y0 >= 0 && y0 < size)
-                tex.SetPixel(x0, y0, col);
+                pixels[y0 * size + x0] = col;
 
             if (x0 == x1 && y0 == y1) break;
             int e2 = 2 * err;
