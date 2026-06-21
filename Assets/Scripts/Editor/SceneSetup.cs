@@ -110,20 +110,20 @@ public class SceneSetup : EditorWindow
         ctrlRect.anchorMax = new Vector2(0, 1);
         ctrlRect.sizeDelta = new Vector2(250, 0); // Ample de 250px a l'esquerra
 
-        CreateText(controlsPanel.transform, "Title", "Visor de l'Alumne", new Vector2(125, -30), new Vector2(200, 30), TextAnchor.MiddleCenter);
+        CreateText(controlsPanel.transform, "Title", "Visor de l'Alumne", new Vector2(125, 120), new Vector2(200, 30), TextAnchor.MiddleCenter);
 
         // Toggles Model
-        CreateText(controlsPanel.transform, "LblModel", "Selecció de Model:", new Vector2(125, -80), new Vector2(200, 30), TextAnchor.MiddleLeft);
-        Toggle highpolyToggle = CreateToggle(controlsPanel.transform, "HighpolyToggle", "Mostrar Highpoly", new Vector2(125, -120));
+        CreateText(controlsPanel.transform, "LblModel", "Selecció de Model:", new Vector2(125, 70), new Vector2(200, 30), TextAnchor.MiddleLeft);
+        Toggle highpolyToggle = CreateToggle(controlsPanel.transform, "HighpolyToggle", "Mostrar Highpoly", new Vector2(125, 30));
         highpolyToggle.isOn = false;
         UnityEventTools.AddPersistentListener(highpolyToggle.onValueChanged, new UnityAction<bool>(modelLoader.ToggleHighpoly));
 
         // Toggles Materials
-        CreateText(controlsPanel.transform, "LblMat", "Canals de Material:", new Vector2(125, -180), new Vector2(200, 30), TextAnchor.MiddleLeft);
-        Toggle albedoToggle = CreateToggle(controlsPanel.transform, "AlbedoToggle", "Color (Albedo)", new Vector2(125, -220));
-        Toggle normalToggle = CreateToggle(controlsPanel.transform, "NormalToggle", "Relleu (Normal Map)", new Vector2(125, -260));
-        Toggle metallicToggle = CreateToggle(controlsPanel.transform, "MetallicToggle", "Metall/Rugositat", new Vector2(125, -300));
-        Toggle wireframeToggle = CreateToggle(controlsPanel.transform, "WireframeToggle", "Malla (Wireframe)", new Vector2(125, -340));
+        CreateText(controlsPanel.transform, "LblMat", "Canals de Material:", new Vector2(125, -30), new Vector2(200, 30), TextAnchor.MiddleLeft);
+        Toggle albedoToggle = CreateToggle(controlsPanel.transform, "AlbedoToggle", "Color (Albedo)", new Vector2(125, -70));
+        Toggle normalToggle = CreateToggle(controlsPanel.transform, "NormalToggle", "Relleu (Normal Map)", new Vector2(125, -110));
+        Toggle metallicToggle = CreateToggle(controlsPanel.transform, "MetallicToggle", "Metall/Rugositat", new Vector2(125, -150));
+        Toggle wireframeToggle = CreateToggle(controlsPanel.transform, "WireframeToggle", "Malla (Wireframe)", new Vector2(125, -190));
         wireframeToggle.isOn = false;
         
         // Aquests es connectaran per codi durant el Start perquè el MaterialViewer es crea dinàmicament
