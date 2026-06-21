@@ -12,6 +12,11 @@ public class OllamaClient : MonoBehaviour
     public RubricConfig rubricConfig;
     public Text reportTextUI; 
 
+    void Start()
+    {
+        if (rubricConfig == null) rubricConfig = Object.FindAnyObjectByType<RubricConfig>();
+    }
+
     public void GenerateReport(int triangles, int vertices, int budget, float score)
     {
         StartCoroutine(SendOllamaRequest(triangles, vertices, budget, score));

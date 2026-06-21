@@ -9,6 +9,28 @@ public class SceneSetup : EditorWindow
     [MenuItem("Visor 3D/1. Generar Escena Automàticament (Standalone)")]
     public static void GenerateScene()
     {
+        // 0. Forçar Read/Write a tots els models carregats a l'escena perquè es pugui avaluar la malla
+        MeshFilter[] allFilters = Object.FindObjectsByType<MeshFilter>(FindObjectsSortMode.None);
+        bool modelsReimported = false;
+        foreach (var mf in allFilters)
+        {
+            if (mf.sharedMesh != null && !mf.sharedMesh.isReadable)
+            {
+                string path = AssetDatabase.GetAssetPath(mf.sharedMesh);
+                if (!string.IsNullOrEmpty(path))
+                {
+                    ModelImporter importer = AssetImporter.GetAtPath(path) as ModelImporter;
+                    if (importer != null && !importer.isReadable)
+                    {
+                        importer.isReadable = true;
+                        importer.SaveAndReimport();
+                        modelsReimported = true;
+                    }
+                }
+            }
+        }
+        if (modelsReimported) Debug.Log("S'ha activat 'Read/Write' automàticament als models per poder llegir-los.");
+
         // 1. Crear l'objecte ModelLoader i contenidors
         GameObject modelLoaderObj = GameObject.Find("ModelLoader");
         if (modelLoaderObj == null) modelLoaderObj = new GameObject("ModelLoader");
@@ -41,6 +63,7 @@ public class SceneSetup : EditorWindow
         polygonCounter.evaluator = evaluator;
         evaluator.rubricConfig = rubricConfig;
         evaluator.ollamaClient = ollamaClient;
+        ollamaClient.rubricConfig = rubricConfig;
 
         Camera mainCam = Camera.main;
         if (mainCam != null)
