@@ -1,5 +1,6 @@
 using UnityEngine;
 using TMPro;
+using UnityEngine.InputSystem;
 
 public class AuthManager : MonoBehaviour
 {
@@ -21,21 +22,24 @@ public class AuthManager : MonoBehaviour
 
     void Update()
     {
-        // Drecera oculta per obrir el Login del professor
-        if ((Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)) && 
-            (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift)) && 
-            Input.GetKeyDown(KeyCode.T))
+        // Drecera oculta per obrir el Login del professor usant el Nou Input System
+        if (Keyboard.current != null)
         {
-            if (!IsTeacherMode)
+            if (Keyboard.current.ctrlKey.isPressed && 
+                Keyboard.current.shiftKey.isPressed && 
+                Keyboard.current.tKey.wasPressedThisFrame)
             {
-                bool isLoginActive = loginPanel != null && loginPanel.activeSelf;
-                if (loginPanel != null) loginPanel.SetActive(!isLoginActive);
-            }
-            else
-            {
-                // Si ja som professor, amaguem/mostrem el panell per poder veure el model
-                bool isTeacherActive = teacherPanel != null && teacherPanel.activeSelf;
-                if (teacherPanel != null) teacherPanel.SetActive(!isTeacherActive);
+                if (!IsTeacherMode)
+                {
+                    bool isLoginActive = loginPanel != null && loginPanel.activeSelf;
+                    if (loginPanel != null) loginPanel.SetActive(!isLoginActive);
+                }
+                else
+                {
+                    // Si ja som professor, amaguem/mostrem el panell per poder veure el model
+                    bool isTeacherActive = teacherPanel != null && teacherPanel.activeSelf;
+                    if (teacherPanel != null) teacherPanel.SetActive(!isTeacherActive);
+                }
             }
         }
     }
