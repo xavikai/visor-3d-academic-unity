@@ -285,12 +285,12 @@ public class MaterialViewer : MonoBehaviour
         GameObject bgObj = GameObject.CreatePrimitive(PrimitiveType.Quad);
         bgObj.transform.SetParent(layoutObj.transform, false);
         bgObj.transform.localPosition = new Vector3(0, 0, 0.05f); // Una mica enrere perquè les línies es vegin per davant
-        bgObj.transform.localScale = new Vector3(1.05f, 1.05f, 1f); // 5% de marge
+        bgObj.transform.localScale = new Vector3(2.1f, 2.1f, 1f); // El layout fa 2x2 metres, doncs 2.1 per tenir marge
         Destroy(bgObj.GetComponent<Collider>());
         MeshRenderer bgMr = bgObj.GetComponent<MeshRenderer>();
         Material bgMat = new Material(Shader.Find("Universal Render Pipeline/Unlit"));
         if (bgMat == null) bgMat = new Material(Shader.Find("UI/Default"));
-        bgMat.color = new Color(0.1f, 0.1f, 0.1f, 1f); // Gris molt fosc
+        bgMat.color = new Color(0.1f, 0.1f, 0.1f, 0.85f); // Gris fosc lleugerament transparent
         bgMr.material = bgMat;
 
         layoutObj.SetActive(false);

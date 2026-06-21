@@ -66,12 +66,26 @@ public class StudentUIHook : MonoBehaviour
 
     private void OnVertexColorChanged(bool state)
     {
+        if (state && uvToggle != null && uvToggle.isOn)
+        {
+            uvToggle.SetIsOnWithoutNotify(false);
+            if (modelLoader != null && modelLoader.materialViewer != null)
+                modelLoader.materialViewer.ToggleUV(false);
+        }
+
         if (modelLoader != null && modelLoader.materialViewer != null)
             modelLoader.materialViewer.ToggleVertexColor(state);
     }
 
     private void OnUvChanged(bool state)
     {
+        if (state && vertexColorToggle != null && vertexColorToggle.isOn)
+        {
+            vertexColorToggle.SetIsOnWithoutNotify(false);
+            if (modelLoader != null && modelLoader.materialViewer != null)
+                modelLoader.materialViewer.ToggleVertexColor(false);
+        }
+
         if (modelLoader != null && modelLoader.materialViewer != null)
             modelLoader.materialViewer.ToggleUV(state);
     }
