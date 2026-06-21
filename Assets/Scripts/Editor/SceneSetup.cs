@@ -110,33 +110,33 @@ public class SceneSetup : EditorWindow
         GameObject studentPanel = CreatePanel(canvasObj.transform, "StudentPanel", new Color(0, 0, 0, 0), new Vector2(0, 0), new Vector2(1, 1));
         
         // Panell de controls inferior/lateral
-        GameObject controlsPanel = CreatePanel(studentPanel.transform, "Controls", new Color(0.1f, 0.1f, 0.1f, 0.8f), new Vector2(0, 0), new Vector2(0, 0));
+        GameObject controlsPanel = CreatePanel(studentPanel.transform, "Controls", new Color(0.1f, 0.1f, 0.1f, 0.8f), new Vector2(0, 0), new Vector2(0, 1));
         RectTransform ctrlRect = controlsPanel.GetComponent<RectTransform>();
-        ctrlRect.anchorMin = new Vector2(0, 0);
-        ctrlRect.anchorMax = new Vector2(0, 1);
-        ctrlRect.sizeDelta = new Vector2(400, 0); // Ample de 400px a l'esquerra
+        ctrlRect.pivot = new Vector2(0, 0.5f);
+        ctrlRect.anchoredPosition = new Vector2(0, 0);
+        ctrlRect.sizeDelta = new Vector2(350, 0); // Ample real i ben ancorat
 
-        CreateText(controlsPanel.transform, "Title", "Visor de l'Alumne", new Vector2(200, 150), new Vector2(350, 40), TextAnchor.MiddleCenter, 32);
+        CreateText(controlsPanel.transform, "Title", "Visor de l'Alumne", new Vector2(0, 150), new Vector2(350, 40), TextAnchor.MiddleCenter, 32);
 
         // Toggles Model
-        CreateText(controlsPanel.transform, "LblModel", "Selecció de Model:", new Vector2(200, 80), new Vector2(350, 40), TextAnchor.MiddleLeft, 24);
-        Toggle highpolyToggle = CreateToggle(controlsPanel.transform, "HighpolyToggle", "Mostrar Highpoly", new Vector2(200, 30));
+        CreateText(controlsPanel.transform, "LblModel", "Selecció de Model:", new Vector2(20, 80), new Vector2(300, 40), TextAnchor.MiddleLeft, 24);
+        Toggle highpolyToggle = CreateToggle(controlsPanel.transform, "HighpolyToggle", "Mostrar Highpoly", new Vector2(0, 30));
         highpolyToggle.isOn = false;
         UnityEventTools.AddPersistentListener(highpolyToggle.onValueChanged, new UnityAction<bool>(modelLoader.ToggleHighpoly));
 
         // Toggles Materials
-        CreateText(controlsPanel.transform, "LblMat", "Canals de Material:", new Vector2(200, -50), new Vector2(350, 40), TextAnchor.MiddleLeft, 24);
-        Toggle albedoToggle = CreateToggle(controlsPanel.transform, "AlbedoToggle", "Color (Albedo)", new Vector2(200, -100));
-        Toggle normalToggle = CreateToggle(controlsPanel.transform, "NormalToggle", "Relleu (Normal Map)", new Vector2(200, -150));
-        Toggle metallicToggle = CreateToggle(controlsPanel.transform, "MetallicToggle", "Metall/Rugositat", new Vector2(200, -200));
-        Toggle wireframeToggle = CreateToggle(controlsPanel.transform, "WireframeToggle", "Malla (Wireframe)", new Vector2(200, -250));
+        CreateText(controlsPanel.transform, "LblMat", "Canals de Material:", new Vector2(20, -50), new Vector2(300, 40), TextAnchor.MiddleLeft, 24);
+        Toggle albedoToggle = CreateToggle(controlsPanel.transform, "AlbedoToggle", "Color (Albedo)", new Vector2(0, -100));
+        Toggle normalToggle = CreateToggle(controlsPanel.transform, "NormalToggle", "Relleu (Normal Map)", new Vector2(0, -150));
+        Toggle metallicToggle = CreateToggle(controlsPanel.transform, "MetallicToggle", "Metall/Rugositat", new Vector2(0, -200));
+        Toggle wireframeToggle = CreateToggle(controlsPanel.transform, "WireframeToggle", "Malla (Wireframe)", new Vector2(0, -250));
         wireframeToggle.isOn = false;
-        Toggle vertexColorToggle = CreateToggle(controlsPanel.transform, "VertexColorToggle", "Vertex Colors", new Vector2(200, -300));
+        Toggle vertexColorToggle = CreateToggle(controlsPanel.transform, "VertexColorToggle", "Vertex Colors", new Vector2(0, -300));
         vertexColorToggle.isOn = false;
 
         // Estadístiques
-        CreateText(controlsPanel.transform, "LblStats", "Estadístiques:", new Vector2(200, -380), new Vector2(350, 40), TextAnchor.MiddleLeft, 24);
-        Text statsText = CreateText(controlsPanel.transform, "StatsText", "Calculant...", new Vector2(200, -450), new Vector2(350, 100), TextAnchor.UpperLeft, 18);
+        CreateText(controlsPanel.transform, "LblStats", "Estadístiques:", new Vector2(20, -380), new Vector2(300, 40), TextAnchor.MiddleLeft, 24);
+        Text statsText = CreateText(controlsPanel.transform, "StatsText", "Calculant...", new Vector2(20, -460), new Vector2(300, 120), TextAnchor.UpperLeft, 18);
         
         // Aquests es connectaran per codi durant el Start perquè el MaterialViewer es crea dinàmicament
         var hook = GetOrAddComponent<StudentUIHook>(studentPanel);

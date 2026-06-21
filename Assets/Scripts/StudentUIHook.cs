@@ -34,8 +34,8 @@ public class StudentUIHook : MonoBehaviour
         if (modelLoader.lowpolyContainer != null)
             modelLoader.polygonCounter.GetStats(modelLoader.lowpolyContainer, out lowTris, out lowVerts);
 
-        statsText.text = $"<b>Highpoly:</b> {highTris:N0} tris | {highVerts:N0} verts\n" +
-                         $"<b>Lowpoly:</b> {lowTris:N0} tris | {lowVerts:N0} verts";
+        statsText.text = $"<b>Highpoly:</b>\n{highTris:N0} tris | {highVerts:N0} verts\n\n" +
+                         $"<b>Lowpoly:</b>\n{lowTris:N0} tris | {lowVerts:N0} verts";
     }
 
     private void OnAlbedoChanged(bool state)
