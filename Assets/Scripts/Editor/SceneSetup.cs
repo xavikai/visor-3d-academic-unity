@@ -5,7 +5,6 @@ using UnityEngine.Events;
 using UnityEngine.Rendering;
 #if UNITY_EDITOR
 using UnityEditor.Events;
-using UnityEditor;
 #endif
 
 public class SceneSetup : EditorWindow
@@ -14,7 +13,7 @@ public class SceneSetup : EditorWindow
     public static void GenerateScene()
     {
         // 0. Forçar Read/Write a tots els models carregats a l'escena perquè es pugui avaluar la malla
-        MeshFilter[] allFilters = Object.FindObjectsByType<MeshFilter>(FindObjectsSortMode.None);
+        MeshFilter[] allFilters = Object.FindObjectsByType<MeshFilter>(FindObjectsInactive.Exclude);
         bool modelsReimported = false;
         foreach (var mf in allFilters)
         {
