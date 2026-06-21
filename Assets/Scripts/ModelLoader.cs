@@ -115,15 +115,19 @@ public class ModelLoader : MonoBehaviour
     {
         if (polygonCounter != null)
         {
-            GameObject target = null;
-            if (isHighpolyActive && currentModelIndex >= 0 && currentModelIndex < highpolyModels.Count)
-                target = highpolyModels[currentModelIndex];
-            else if (!isHighpolyActive && currentModelIndex >= 0 && currentModelIndex < lowpolyModels.Count)
-                target = lowpolyModels[currentModelIndex];
-                
+            GameObject target = GetActiveModel();
             if (target == null) target = gameObject;
             polygonCounter.SetModel(target);
         }
+    }
+
+    public GameObject GetActiveModel()
+    {
+        if (isHighpolyActive && currentModelIndex >= 0 && currentModelIndex < highpolyModels.Count)
+            return highpolyModels[currentModelIndex];
+        else if (!isHighpolyActive && currentModelIndex >= 0 && currentModelIndex < lowpolyModels.Count)
+            return lowpolyModels[currentModelIndex];
+        return null;
     }
 
     private void AutoFitModel()

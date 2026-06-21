@@ -78,6 +78,8 @@ public class MaterialViewer : MonoBehaviour
                 {
                     OriginalMaterialData data = new OriginalMaterialData();
                     if (m.HasProperty("_BaseMap")) data.baseMap = m.GetTexture("_BaseMap");
+                    else if (m.HasProperty("_MainTex")) data.baseMap = m.GetTexture("_MainTex");
+
                     if (m.HasProperty("_BumpMap")) data.bumpMap = m.GetTexture("_BumpMap");
                     if (m.HasProperty("_MetallicGlossMap")) data.metallicGlossMap = m.GetTexture("_MetallicGlossMap");
                     
@@ -219,6 +221,23 @@ public class MaterialViewer : MonoBehaviour
         if (allMaterials.Count > 0 && originalData.ContainsKey(allMaterials[0]))
             return originalData[allMaterials[0]];
         return null;
+    }
+
+    public OriginalMaterialData GetActiveMaterialData(GameObject activeModel)
+    {
+        if (activeModel != null)
+        {
+            Renderer[] renderers = activeModel.GetComponentsInChildren<Renderer>(false);
+            if (renderers.Length > 0)
+            {
+                foreach (Material m in renderers[0].sharedMaterials)
+                {
+                    if (m != null && originalData.ContainsKey(m))
+                        return originalData[m];
+                }
+            }
+        }
+        return GetFirstMaterialData();
     }
 
     public void ToggleWireframe(bool state)

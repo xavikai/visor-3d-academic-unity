@@ -49,14 +49,28 @@ public class StudentUIHook : MonoBehaviour
     {
         if (modelLoader == null || modelLoader.materialViewer == null) return;
 
-        var data = modelLoader.materialViewer.GetFirstMaterialData();
+        var data = modelLoader.materialViewer.GetActiveMaterialData(modelLoader.GetActiveModel());
         if (data != null)
         {
-            if (imgAlbedo != null && data.baseMap != null) imgAlbedo.texture = data.baseMap;
-            if (imgNormal != null && data.bumpMap != null) imgNormal.texture = data.bumpMap;
-            if (imgMetallic != null && data.metallicGlossMap != null) imgMetallic.texture = data.metallicGlossMap;
-            if (imgEmission != null && data.emissionMap != null) imgEmission.texture = data.emissionMap;
+            SetTexture(imgAlbedo, data.baseMap);
+            SetTexture(imgNormal, data.bumpMap);
+            SetTexture(imgMetallic, data.metallicGlossMap);
+            SetTexture(imgEmission, data.emissionMap);
         }
+        else
+        {
+            SetTexture(imgAlbedo, null);
+            SetTexture(imgNormal, null);
+            SetTexture(imgMetallic, null);
+            SetTexture(imgEmission, null);
+        }
+    }
+
+    private void SetTexture(RawImage img, Texture tex)
+    {
+        if (img == null) return;
+        img.texture = tex;
+        img.color = tex != null ? Color.white : new Color(0.15f, 0.15f, 0.15f, 1f);
     }
 
     public void UpdateStats()
