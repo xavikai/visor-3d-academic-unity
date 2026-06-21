@@ -89,4 +89,12 @@ public class OrbitCamera : MonoBehaviour
             transform.position = position;
         }
     }
+
+    public void ResetView(float newDistance)
+    {
+        targetDistance = Mathf.Clamp(newDistance, 0.5f, 500f);
+        currentDistance = targetDistance; // Aplicar a l'instant
+        targetPan = Vector3.zero;
+        currentPan = Vector3.zero; // Aplicar a l'instant
+    }
 }
