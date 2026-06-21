@@ -113,8 +113,8 @@ public class SceneSetup : EditorWindow
                     AssetDatabase.CreateAsset(profile, "Assets/Settings/ViewerProfile.asset");
 
                     var bloom = profile.Add<UnityEngine.Rendering.Universal.Bloom>(true);
-                    bloom.intensity.Override(1.5f);
-                    bloom.threshold.Override(1f);
+                    bloom.intensity.Override(0.5f);
+                    bloom.threshold.Override(1.2f);
 
                     var tonemapping = profile.Add<UnityEngine.Rendering.Universal.Tonemapping>(true);
                     tonemapping.mode.Override(UnityEngine.Rendering.Universal.TonemappingMode.ACES);
