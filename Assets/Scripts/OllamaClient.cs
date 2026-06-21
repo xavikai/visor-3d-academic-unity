@@ -1,13 +1,16 @@
 using UnityEngine;
 using UnityEngine.Networking;
-using TMPro;
+using UnityEngine.UI;
 using System.Text;
 using System.Collections;
 
 public class OllamaClient : MonoBehaviour
 {
+    private string ollamaUrl = "http://localhost:11434/api/generate";
+    private string modelName = "llama3"; // Podeu canviar el model (ex: mistral, gemma)
+
     public RubricConfig rubricConfig;
-    public TMP_Text reportTextUI; 
+    public Text reportTextUI; 
 
     public void GenerateReport(int triangles, int vertices, int budget, float score)
     {

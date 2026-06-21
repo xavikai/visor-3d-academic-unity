@@ -1,14 +1,14 @@
 using UnityEngine;
-using TMPro;
+using UnityEngine.UI;
 using UnityEngine.InputSystem;
 
 public class AuthManager : MonoBehaviour
 {
     public static bool IsTeacherMode = false;
 
-    public GameObject loginPanel; // Abans anomenat studentPanel
+    public GameObject loginPanel;
     public GameObject teacherPanel;
-    public TMP_InputField passwordInput;
+    public InputField passwordInput;
     
     private string correctPassword = "admin";
 
