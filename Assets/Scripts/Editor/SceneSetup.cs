@@ -131,10 +131,12 @@ public class SceneSetup : EditorWindow
         Toggle metallicToggle = CreateToggle(controlsPanel.transform, "MetallicToggle", "Metall/Rugositat", new Vector2(125, -150));
         Toggle wireframeToggle = CreateToggle(controlsPanel.transform, "WireframeToggle", "Malla (Wireframe)", new Vector2(125, -190));
         wireframeToggle.isOn = false;
+        Toggle vertexColorToggle = CreateToggle(controlsPanel.transform, "VertexColorToggle", "Vertex Colors", new Vector2(125, -230));
+        vertexColorToggle.isOn = false;
 
         // Estadístiques
-        CreateText(controlsPanel.transform, "LblStats", "Estadístiques:", new Vector2(125, -240), new Vector2(200, 30), TextAnchor.MiddleLeft);
-        Text statsText = CreateText(controlsPanel.transform, "StatsText", "Calculant...", new Vector2(125, -280), new Vector2(200, 60), TextAnchor.MiddleLeft);
+        CreateText(controlsPanel.transform, "LblStats", "Estadístiques:", new Vector2(125, -280), new Vector2(200, 30), TextAnchor.MiddleLeft);
+        Text statsText = CreateText(controlsPanel.transform, "StatsText", "Calculant...", new Vector2(125, -320), new Vector2(200, 60), TextAnchor.MiddleLeft);
         
         // Aquests es connectaran per codi durant el Start perquè el MaterialViewer es crea dinàmicament
         var hook = GetOrAddComponent<StudentUIHook>(studentPanel);
@@ -143,6 +145,7 @@ public class SceneSetup : EditorWindow
         hook.normalToggle = normalToggle;
         hook.metallicToggle = metallicToggle;
         hook.wireframeToggle = wireframeToggle;
+        hook.vertexColorToggle = vertexColorToggle;
         hook.statsText = statsText;
 
         // 4. Crear LoginPanel

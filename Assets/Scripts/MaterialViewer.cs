@@ -13,6 +13,10 @@ public class MaterialViewer : MonoBehaviour
     private Dictionary<Material, OriginalMaterialData> originalData = new Dictionary<Material, OriginalMaterialData>();
     private List<Material> allMaterials = new List<Material>();
 
+    private Dictionary<Renderer, Material[]> originalMaterials = new Dictionary<Renderer, Material[]>();
+    private Material vertexColorMaterial;
+    private bool isVertexColorMode = false;
+
     private List<GameObject> wireframeObjects = new List<GameObject>();
     private Material wireframeMaterial;
 
@@ -20,19 +24,28 @@ public class MaterialViewer : MonoBehaviour
     {
         originalData.Clear();
         allMaterials.Clear();
+        originalMaterials.Clear();
+        isVertexColorMode = false;
         
         foreach(var w in wireframeObjects) if(w!=null) Destroy(w);
         wireframeObjects.Clear();
 
-        // Podem utilitzar un Unlit bàsic de color per defecte (verd o negre)
         wireframeMaterial = new Material(Shader.Find("Universal Render Pipeline/Unlit"));
         if (wireframeMaterial != null) wireframeMaterial.color = Color.cyan;
+
+        // Intentem utilitzar Particles/Unlit que suporta Vertex Color de forma nativa a l'URP
+        Shader vcShader = Shader.Find("Universal Render Pipeline/Particles/Unlit");
+        if (vcShader == null) vcShader = Shader.Find("UI/Default"); // Fallback
+        vertexColorMaterial = new Material(vcShader);
+        if (vertexColorMaterial.HasProperty("_Surface")) vertexColorMaterial.SetFloat("_Surface", 0); // Opac
+        if (vertexColorMaterial.HasProperty("_Blend")) vertexColorMaterial.SetFloat("_Blend", 0);
 
         Renderer[] renderers = GetComponentsInChildren<Renderer>(true);
         foreach (Renderer r in renderers)
         {
-            // Ometem els propis wireframes que acabem de crear (tot i que els hem destruït, però per seguretat)
             if (r.name == "WireframeOverlay") continue;
+
+            originalMaterials[r] = r.materials;
 
             foreach (Material m in r.materials)
             {
@@ -125,6 +138,27 @@ public class MaterialViewer : MonoBehaviour
         foreach (var w in wireframeObjects)
         {
             if (w != null) w.SetActive(state);
+        }
+    }
+
+    public void ToggleVertexColor(bool state)
+    {
+        isVertexColorMode = state;
+        foreach (var kvp in originalMaterials)
+        {
+            Renderer r = kvp.Key;
+            if (r == null) continue;
+
+            if (state)
+            {
+                Material[] vMats = new Material[kvp.Value.Length];
+                for (int i = 0; i < vMats.Length; i++) vMats[i] = vertexColorMaterial;
+                r.materials = vMats;
+            }
+            else
+            {
+                r.materials = kvp.Value;
+            }
         }
     }
 }
