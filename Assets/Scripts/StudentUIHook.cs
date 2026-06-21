@@ -9,6 +9,7 @@ public class StudentUIHook : MonoBehaviour
     public Toggle metallicToggle;
     public Toggle wireframeToggle;
     public Toggle vertexColorToggle;
+    public Toggle uvToggle;
     public Text statsText;
 
     void Start()
@@ -18,6 +19,7 @@ public class StudentUIHook : MonoBehaviour
         if (metallicToggle != null) metallicToggle.onValueChanged.AddListener(OnMetallicChanged);
         if (wireframeToggle != null) wireframeToggle.onValueChanged.AddListener(OnWireframeChanged);
         if (vertexColorToggle != null) vertexColorToggle.onValueChanged.AddListener(OnVertexColorChanged);
+        if (uvToggle != null) uvToggle.onValueChanged.AddListener(OnUvChanged);
         
         UpdateStats();
     }
@@ -66,5 +68,11 @@ public class StudentUIHook : MonoBehaviour
     {
         if (modelLoader != null && modelLoader.materialViewer != null)
             modelLoader.materialViewer.ToggleVertexColor(state);
+    }
+
+    private void OnUvChanged(bool state)
+    {
+        if (modelLoader != null && modelLoader.materialViewer != null)
+            modelLoader.materialViewer.ToggleUV(state);
     }
 }
