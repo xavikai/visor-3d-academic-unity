@@ -1,53 +1,92 @@
 using UnityEngine;
-using UnityEngine.UI;
+using UnityEngine.UIElements;
 
 public class StudentUIHook : MonoBehaviour
 {
     public ModelLoader modelLoader;
-    public Toggle albedoToggle;
-    public Toggle normalToggle;
-    public Slider normalSlider;
-    public Toggle metallicToggle;
-    public Slider metallicSlider;
-    public Slider smoothnessSlider;
-    public Toggle wireframeToggle;
-    public Toggle vertexColorToggle;
-    public Toggle uvToggle;
-    public Dropdown modelDropdown;
-    public Text statsText;
-    
-    public Toggle emissionToggle;
-    public Slider emissionSlider;
-    
-    public RawImage imgAlbedo;
-    public RawImage imgNormal;
-    public RawImage imgMetallic;
-    public RawImage imgEmission;
-    public RawImage imgUv;
 
-    public GameObject zoomPanel;
-    public RawImage imgZoom;
-    public Text zoomTitle;
-    public Button btnCloseZoom;
+    private UIDocument uiDocument;
 
-    void Start()
+    private Toggle albedoToggle;
+    private Toggle normalToggle;
+    private Slider normalSlider;
+    private Toggle metallicToggle;
+    private Slider metallicSlider;
+    private Slider smoothnessSlider;
+    private Toggle highpolyToggle;
+    private Toggle wireframeToggle;
+    private Toggle vertexColorToggle;
+    private Toggle uvToggle;
+    private DropdownField modelDropdown;
+    private Label statsText;
+    
+    private Toggle emissionToggle;
+    private Slider emissionSlider;
+    
+    private Image imgAlbedo;
+    private Image imgNormal;
+    private Image imgMetallic;
+    private Image imgEmission;
+    private Image imgUv;
+
+    private VisualElement zoomPanel;
+    private Image imgZoom;
+    private Label zoomTitle;
+    private Button btnCloseZoom;
+
+    private void OnEnable()
     {
-        if (albedoToggle != null) albedoToggle.onValueChanged.AddListener(OnAlbedoChanged);
-        if (normalToggle != null) normalToggle.onValueChanged.AddListener(OnNormalChanged);
-        if (metallicToggle != null) metallicToggle.onValueChanged.AddListener(OnMetallicChanged);
-        if (wireframeToggle != null) wireframeToggle.onValueChanged.AddListener(OnWireframeChanged);
-        if (vertexColorToggle != null) vertexColorToggle.onValueChanged.AddListener(OnVertexColorChanged);
-        if (uvToggle != null) uvToggle.onValueChanged.AddListener(OnUvChanged);
+        uiDocument = GetComponent<UIDocument>();
+        if (uiDocument == null) return;
+
+        var root = uiDocument.rootVisualElement;
+
+        // Cercar elements
+        albedoToggle = root.Q<Toggle>("AlbedoToggle");
+        normalToggle = root.Q<Toggle>("NormalToggle");
+        normalSlider = root.Q<Slider>("NormalSlider");
+        metallicToggle = root.Q<Toggle>("MetallicToggle");
+        metallicSlider = root.Q<Slider>("MetallicSlider");
+        smoothnessSlider = root.Q<Slider>("SmoothnessSlider");
+        highpolyToggle = root.Q<Toggle>("HighpolyToggle");
+        wireframeToggle = root.Q<Toggle>("WireframeToggle");
+        vertexColorToggle = root.Q<Toggle>("VertexColorToggle");
+        uvToggle = root.Q<Toggle>("UvToggle");
+        modelDropdown = root.Q<DropdownField>("ModelDropdown");
+        statsText = root.Q<Label>("StatsText");
         
-        if (normalSlider != null) normalSlider.onValueChanged.AddListener(OnNormalIntensityChanged);
-        if (metallicSlider != null) metallicSlider.onValueChanged.AddListener(OnMetallicIntensityChanged);
-        if (smoothnessSlider != null) smoothnessSlider.onValueChanged.AddListener(OnSmoothnessChanged);
-        if (emissionSlider != null) emissionSlider.onValueChanged.AddListener(OnEmissionIntensityChanged);
-        if (emissionToggle != null) emissionToggle.onValueChanged.AddListener(OnEmissionChanged);
+        emissionToggle = root.Q<Toggle>("EmissionToggle");
+        emissionSlider = root.Q<Slider>("EmissionSlider");
         
-        if (modelDropdown != null) modelDropdown.onValueChanged.AddListener(OnModelSelected);
+        imgAlbedo = root.Q<Image>("ImgAlbedo");
+        imgNormal = root.Q<Image>("ImgNormal");
+        imgMetallic = root.Q<Image>("ImgMetallic");
+        imgEmission = root.Q<Image>("ImgEmission");
+        imgUv = root.Q<Image>("ImgUv");
+
+        zoomPanel = root.Q<VisualElement>("ZoomPanel");
+        imgZoom = root.Q<Image>("ImgZoom");
+        zoomTitle = root.Q<Label>("ZoomTitle");
+        btnCloseZoom = root.Q<Button>("BtnCloseZoom");
+
+        // Registrar esdeveniments
+        if (albedoToggle != null) albedoToggle.RegisterValueChangedCallback(evt => OnAlbedoChanged(evt.newValue));
+        if (normalToggle != null) normalToggle.RegisterValueChangedCallback(evt => OnNormalChanged(evt.newValue));
+        if (metallicToggle != null) metallicToggle.RegisterValueChangedCallback(evt => OnMetallicChanged(evt.newValue));
+        if (highpolyToggle != null) highpolyToggle.RegisterValueChangedCallback(evt => OnHighpolyChanged(evt.newValue));
+        if (wireframeToggle != null) wireframeToggle.RegisterValueChangedCallback(evt => OnWireframeChanged(evt.newValue));
+        if (vertexColorToggle != null) vertexColorToggle.RegisterValueChangedCallback(evt => OnVertexColorChanged(evt.newValue));
+        if (uvToggle != null) uvToggle.RegisterValueChangedCallback(evt => OnUvChanged(evt.newValue));
         
-        if (btnCloseZoom != null) btnCloseZoom.onClick.AddListener(CloseZoom);
+        if (normalSlider != null) normalSlider.RegisterValueChangedCallback(evt => OnNormalIntensityChanged(evt.newValue));
+        if (metallicSlider != null) metallicSlider.RegisterValueChangedCallback(evt => OnMetallicIntensityChanged(evt.newValue));
+        if (smoothnessSlider != null) smoothnessSlider.RegisterValueChangedCallback(evt => OnSmoothnessChanged(evt.newValue));
+        if (emissionSlider != null) emissionSlider.RegisterValueChangedCallback(evt => OnEmissionIntensityChanged(evt.newValue));
+        if (emissionToggle != null) emissionToggle.RegisterValueChangedCallback(evt => OnEmissionChanged(evt.newValue));
+        
+        if (modelDropdown != null) modelDropdown.RegisterValueChangedCallback(evt => OnModelSelected(evt.newValue));
+        
+        if (btnCloseZoom != null) btnCloseZoom.clicked += CloseZoom;
         
         SetupZoomButton(imgAlbedo, "Albedo");
         SetupZoomButton(imgNormal, "Normal Map");
@@ -57,6 +96,31 @@ public class StudentUIHook : MonoBehaviour
 
         UpdateStats();
         Invoke("UpdateTextureGallery", 0.5f); // Donem mig segon perquè s'inicialitzi el model actiu
+    }
+
+    private void Start()
+    {
+        if (modelDropdown != null && modelLoader != null)
+        {
+            modelDropdown.choices.Clear();
+            if (modelLoader.lowpolyContainer != null)
+            {
+                foreach (Transform child in modelLoader.lowpolyContainer.transform)
+                {
+                    modelDropdown.choices.Add(child.name);
+                }
+            }
+            
+            if (modelDropdown.choices.Count > 0)
+            {
+                modelDropdown.SetValueWithoutNotify(modelDropdown.choices[0]);
+            }
+        }
+    }
+
+    private void OnDisable()
+    {
+        if (btnCloseZoom != null) btnCloseZoom.clicked -= CloseZoom;
     }
 
     public void UpdateTextureGallery()
@@ -79,45 +143,52 @@ public class StudentUIHook : MonoBehaviour
             SetTexture(imgEmission, null);
         }
 
-        // UVs belong to the model, not just the material
         GameObject activeModel = modelLoader.GetActiveModel();
         SetTexture(imgUv, modelLoader.materialViewer.GetActiveModelUVs(activeModel));
     }
 
-    private void SetTexture(RawImage img, Texture tex)
+    private void SetTexture(Image img, Texture tex)
     {
         if (img == null) return;
-        img.texture = tex;
-        img.color = tex != null ? Color.white : new Color(0.15f, 0.15f, 0.15f, 1f);
+        img.image = tex;
+        img.tintColor = tex != null ? Color.white : new Color(0.15f, 0.15f, 0.15f, 1f);
     }
 
-    private void SetupZoomButton(RawImage img, string title)
+    private void SetupZoomButton(Image img, string title)
     {
         if (img != null)
         {
-            Button btn = img.GetComponent<Button>();
-            if (btn != null)
+            img.RegisterCallback<PointerDownEvent>(evt => 
             {
-                btn.onClick.AddListener(() => OpenZoom(img.texture, title, img.material));
-            }
+                if (evt.button == 0) // Click esquerre
+                {
+                    OpenZoom(img.image, title);
+                }
+            });
         }
     }
 
-    private void OpenZoom(Texture tex, string title, Material mat)
+    private void OpenZoom(Texture tex, string title)
     {
         if (tex == null || zoomPanel == null) return;
         
-        zoomTitle.text = title;
-        imgZoom.texture = tex;
-        imgZoom.material = mat; // Copia el material desempaquetador si n'hi ha (Normal Map)
-        imgZoom.color = Color.white;
+        if (zoomTitle != null) zoomTitle.text = title;
+        if (imgZoom != null) 
+        {
+            imgZoom.image = tex;
+            imgZoom.tintColor = Color.white;
+            
+            // UI Toolkit no suporta l'assignació directa de Materials per desempaquetar Normal Maps a la Image d'aquesta forma
+            // Si calgués, s'hauria de crear un shader unlit a mida o modificar l'estil amb `-unity-background-image-tint-color`.
+            // Pel visor acadèmic, mostrem la textura crua.
+        }
         
-        zoomPanel.SetActive(true);
+        zoomPanel.style.display = DisplayStyle.Flex;
     }
 
     private void CloseZoom()
     {
-        if (zoomPanel != null) zoomPanel.SetActive(false);
+        if (zoomPanel != null) zoomPanel.style.display = DisplayStyle.None;
     }
 
     public void UpdateStats()
@@ -148,6 +219,16 @@ public class StudentUIHook : MonoBehaviour
             modelLoader.materialViewer.ToggleNormal(state);
     }
 
+    private void OnHighpolyChanged(bool state)
+    {
+        if (modelLoader != null)
+        {
+            modelLoader.ToggleHighpoly(state);
+            UpdateStats();
+            UpdateTextureGallery();
+        }
+    }
+
     private void OnMetallicChanged(bool state)
     {
         if (modelLoader != null && modelLoader.materialViewer != null)
@@ -162,9 +243,9 @@ public class StudentUIHook : MonoBehaviour
 
     private void OnVertexColorChanged(bool state)
     {
-        if (state && uvToggle != null && uvToggle.isOn)
+        if (state && uvToggle != null && uvToggle.value)
         {
-            uvToggle.SetIsOnWithoutNotify(false);
+            uvToggle.SetValueWithoutNotify(false);
             if (modelLoader != null && modelLoader.materialViewer != null)
                 modelLoader.materialViewer.ToggleUV(false);
         }
@@ -175,9 +256,9 @@ public class StudentUIHook : MonoBehaviour
 
     private void OnUvChanged(bool state)
     {
-        if (state && vertexColorToggle != null && vertexColorToggle.isOn)
+        if (state && vertexColorToggle != null && vertexColorToggle.value)
         {
-            vertexColorToggle.SetIsOnWithoutNotify(false);
+            vertexColorToggle.SetValueWithoutNotify(false);
             if (modelLoader != null && modelLoader.materialViewer != null)
                 modelLoader.materialViewer.ToggleVertexColor(false);
         }
@@ -216,13 +297,17 @@ public class StudentUIHook : MonoBehaviour
             modelLoader.materialViewer.SetEmissionIntensity(value);
     }
 
-    private void OnModelSelected(int index)
+    private void OnModelSelected(string selectedValue)
     {
-        if (modelLoader != null)
+        if (modelLoader != null && modelDropdown != null)
         {
-            modelLoader.SetCurrentModel(index);
-            UpdateStats();
-            UpdateTextureGallery();
+            int index = modelDropdown.choices.IndexOf(selectedValue);
+            if (index >= 0)
+            {
+                modelLoader.SetCurrentModel(index);
+                UpdateStats();
+                UpdateTextureGallery();
+            }
         }
     }
 }

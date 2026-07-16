@@ -260,29 +260,6 @@ public class SceneSetup : EditorWindow
         // Aquests es connectaran per codi durant el Start perquè el MaterialViewer es crea dinàmicament
         var hook = GetOrAddComponent<StudentUIHook>(studentPanel);
         hook.modelLoader = modelLoader;
-        hook.modelDropdown = modelDropdown;
-        hook.albedoToggle = albedoToggle;
-        hook.normalToggle = normalToggle;
-        hook.normalSlider = normalSlider;
-        hook.metallicToggle = metallicToggle;
-        hook.metallicSlider = metallicSlider;
-        hook.smoothnessSlider = smoothnessSlider;
-        hook.emissionToggle = emissionToggle;
-        hook.emissionSlider = emissionSlider;
-        hook.wireframeToggle = wireframeToggle;
-        hook.vertexColorToggle = vertexColorToggle;
-        hook.uvToggle = uvToggle;
-        hook.statsText = statsText;
-        hook.imgAlbedo = imgAlbedo;
-        hook.imgNormal = imgNormal;
-        hook.imgMetallic = imgMetallic;
-        hook.imgEmission = imgEmission;
-        hook.imgUv = imgUv;
-        
-        hook.zoomPanel = zoomPanel;
-        hook.imgZoom = imgZoom;
-        hook.zoomTitle = zoomTitle;
-        hook.btnCloseZoom = btnCloseZoom;
 
         // 4. Crear LoginPanel
         GameObject loginPanel = CreatePanel(canvasObj.transform, "LoginPanel", new Color(0.2f, 0.2f, 0.2f, 0.95f), new Vector2(0.35f, 0.35f), new Vector2(0.65f, 0.65f));

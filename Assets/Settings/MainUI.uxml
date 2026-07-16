@@ -1,0 +1,91 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="project://database/Assets/Settings/MainUI.uss" />
+    
+    <ui:VisualElement name="MainContainer" class="main-container" picking-mode="Ignore">
+        <!-- Esquerra: Controls -->
+        <ui:VisualElement name="LeftPanel" class="panel side-panel">
+            <ui:Label text="Visor 3D Acadèmic" class="header-title" />
+            
+            <ui:ScrollView class="controls-scroll">
+                <ui:DropdownField name="ModelDropdown" label="Model" class="control-element" />
+
+                <ui:VisualElement class="section">
+                    <ui:Toggle name="HighpolyToggle" label="Mostrar Highpoly" class="control-element" />
+                </ui:VisualElement>
+
+                <ui:VisualElement class="section">
+                    <ui:Label text="Canals de Material" class="section-title" />
+                    
+                    <ui:Toggle name="AlbedoToggle" label="Albedo" class="control-element" value="true" />
+                    
+                    <ui:Toggle name="NormalToggle" label="Normal Map" class="control-element" value="true" />
+                    <ui:Slider name="NormalSlider" label="Intensitat Normal" class="control-element slider" high-value="2" low-value="0" value="1" />
+                    
+                    <ui:Toggle name="MetallicToggle" label="Metallic" class="control-element" value="true" />
+                    <ui:Slider name="MetallicSlider" label="Metallic" class="control-element slider" high-value="1" low-value="0" value="0" />
+                    <ui:Slider name="SmoothnessSlider" label="Smoothness" class="control-element slider" high-value="1" low-value="0" value="0.5" />
+                    
+                    <ui:Toggle name="EmissionToggle" label="Emission" class="control-element" value="true" />
+                    <ui:Slider name="EmissionSlider" label="Intensitat Emission" class="control-element slider" high-value="5" low-value="0" value="1" />
+                </ui:VisualElement>
+
+                <ui:VisualElement class="section">
+                    <ui:Label text="Visualització Avançada" class="section-title" />
+                    <ui:Toggle name="WireframeToggle" label="Wireframe" class="control-element" />
+                    <ui:Toggle name="VertexColorToggle" label="Vertex Color" class="control-element" />
+                    <ui:Toggle name="UvToggle" label="UV Layout" class="control-element" />
+                </ui:VisualElement>
+                
+                <ui:VisualElement class="flex-spacer" />
+                
+                <ui:VisualElement class="section stats-section">
+                    <ui:Label name="StatsText" text="Highpoly:&#10;0 tris | 0 verts&#10;&#10;Lowpoly:&#10;0 tris | 0 verts" class="stats-text" />
+                </ui:VisualElement>
+            </ui:ScrollView>
+        </ui:VisualElement>
+
+        <!-- Dreta: Galeria Textures -->
+        <ui:VisualElement name="RightPanel" class="panel right-panel">
+            <ui:Label text="Mapes del Material" class="section-title text-center" />
+            
+            <ui:ScrollView class="gallery-scroll">
+                <ui:VisualElement class="texture-item">
+                    <ui:Label text="Albedo" class="texture-label" />
+                    <ui:Image name="ImgAlbedo" class="texture-preview" />
+                </ui:VisualElement>
+                
+                <ui:VisualElement class="texture-item">
+                    <ui:Label text="Normal Map" class="texture-label" />
+                    <ui:Image name="ImgNormal" class="texture-preview" />
+                </ui:VisualElement>
+                
+                <ui:VisualElement class="texture-item">
+                    <ui:Label text="Metallic / Smoothness" class="texture-label" />
+                    <ui:Image name="ImgMetallic" class="texture-preview" />
+                </ui:VisualElement>
+
+                <ui:VisualElement class="texture-item">
+                    <ui:Label text="Emission" class="texture-label" />
+                    <ui:Image name="ImgEmission" class="texture-preview" />
+                </ui:VisualElement>
+                
+                <ui:VisualElement class="texture-item">
+                    <ui:Label text="UV Layout" class="texture-label" />
+                    <ui:Image name="ImgUv" class="texture-preview" />
+                </ui:VisualElement>
+            </ui:ScrollView>
+        </ui:VisualElement>
+        
+        <!-- Modal de Zoom (ocult per defecte) -->
+        <ui:VisualElement name="ZoomPanel" class="zoom-modal" style="display: none;">
+            <ui:VisualElement class="zoom-content">
+                <ui:VisualElement class="zoom-header">
+                    <ui:Label name="ZoomTitle" text="Títol Textura" class="header-title" />
+                    <ui:Button name="BtnCloseZoom" text="X" class="close-btn" />
+                </ui:VisualElement>
+                <ui:Image name="ImgZoom" class="zoom-image" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+    </ui:VisualElement>
+</ui:UXML>

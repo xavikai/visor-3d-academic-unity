@@ -140,6 +140,9 @@ public class MaterialViewer : MonoBehaviour
         {
             if (m.HasProperty("_BumpMap"))
                 m.SetTexture("_BumpMap", state ? originalData[m].bumpMap : null);
+            
+            if (state && originalData[m].bumpMap != null) m.EnableKeyword("_NORMALMAP");
+            else m.DisableKeyword("_NORMALMAP");
         }
     }
 
@@ -149,6 +152,16 @@ public class MaterialViewer : MonoBehaviour
         {
             if (m.HasProperty("_MetallicGlossMap"))
                 m.SetTexture("_MetallicGlossMap", state ? originalData[m].metallicGlossMap : null);
+            
+            if (state && originalData[m].metallicGlossMap != null) m.EnableKeyword("_METALLICSPECGLOSSMAP");
+            else m.DisableKeyword("_METALLICSPECGLOSSMAP");
+            
+            // Força que si desactivem el mapa de metall, no es quedi 100% metàl·lic per culpa d'un valor base alt
+            if (m.HasProperty("_Metallic"))
+            {
+                // Si s'activa, restaura l'original, sinó el posa a 0 perquè no brilli per defecte
+                m.SetFloat("_Metallic", state ? originalData[m].metallic : 0f);
+            }
         }
     }
 
