@@ -38,23 +38,15 @@ public class SceneSetup : EditorWindow
         GameObject modelLoaderObj = GameObject.Find("ModelLoader");
         if (modelLoaderObj == null) modelLoaderObj = new GameObject("ModelLoader");
 
-        GameObject highpolyObj = GameObject.Find("HighpolyContainer");
-        if (highpolyObj == null) 
+        GameObject modelsObj = GameObject.Find("ModelsContainer");
+        if (modelsObj == null) 
         {
-            highpolyObj = new GameObject("HighpolyContainer");
-            highpolyObj.transform.SetParent(modelLoaderObj.transform);
-        }
-        
-        GameObject lowpolyObj = GameObject.Find("LowpolyContainer");
-        if (lowpolyObj == null) 
-        {
-            lowpolyObj = new GameObject("LowpolyContainer");
-            lowpolyObj.transform.SetParent(modelLoaderObj.transform);
+            modelsObj = new GameObject("ModelsContainer");
+            modelsObj.transform.SetParent(modelLoaderObj.transform);
         }
 
         var modelLoader = GetOrAddComponent<ModelLoader>(modelLoaderObj);
-        modelLoader.highpolyContainer = highpolyObj;
-        modelLoader.lowpolyContainer = lowpolyObj;
+        modelLoader.modelsContainer = modelsObj;
 
         var polygonCounter = GetOrAddComponent<PolygonCounter>(modelLoaderObj);
         var evaluator = GetOrAddComponent<Evaluator>(modelLoaderObj);

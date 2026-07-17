@@ -6,13 +6,19 @@ public class ModelLoader : MonoBehaviour
 {
     public PolygonCounter polygonCounter;
     
-    public GameObject highpolyContainer;
-    public GameObject lowpolyContainer;
+    public GameObject modelsContainer;
+
+    [System.Serializable]
+    public class ModelEntry
+    {
+        public string name;
+        public List<GameObject> lowpolyParts = new List<GameObject>();
+        public List<GameObject> highpolyParts = new List<GameObject>();
+        public GameObject rootFolder;
+    }
 
     [HideInInspector]
-    public List<GameObject> highpolyModels = new List<GameObject>();
-    [HideInInspector]
-    public List<GameObject> lowpolyModels = new List<GameObject>();
+    public List<ModelEntry> models = new List<ModelEntry>();
 
     [HideInInspector]
     public MaterialViewer materialViewer;
@@ -20,28 +26,110 @@ public class ModelLoader : MonoBehaviour
     private bool isHighpolyActive = false;
     private int currentModelIndex = 0;
 
+    void Awake()
+    {
+        if (polygonCounter == null)
+        {
+            polygonCounter = GetComponent<PolygonCounter>();
+            if (polygonCounter == null) polygonCounter = gameObject.AddComponent<PolygonCounter>();
+        }
+
+        if (modelsContainer == null)
+        {
+            Transform t = transform.Find("ModelsContainer");
+            if (t != null) modelsContainer = t.gameObject;
+        }
+
+        if (modelsContainer != null)
+        {
+            Dictionary<string, ModelEntry> dict = new Dictionary<string, ModelEntry>();
+
+            foreach (Transform child in modelsContainer.transform)
+            {
+                string lowerName = child.name.ToLower();
+                bool hasKeyword = lowerName.Contains("low") || lowerName.Contains("high") || lowerName.Contains("baixa") || lowerName.Contains("alta");
+                
+                string baseName = child.name;
+                if (hasKeyword)
+                {
+                    // Netejar el sufix per trobar el nom base (ex: "escut_lowpoly" -> "escut")
+                    baseName = System.Text.RegularExpressions.Regex.Replace(baseName, @"(?i)[_\-\s]*(low|high|baixa|alta)(poly)?.*$", "");
+                }
+                
+                if (string.IsNullOrEmpty(baseName)) baseName = "Model";
+
+                if (!dict.ContainsKey(baseName))
+                {
+                    dict[baseName] = new ModelEntry();
+                    dict[baseName].name = baseName;
+                    dict[baseName].rootFolder = null;
+                }
+
+                ModelEntry entry = dict[baseName];
+
+                if (hasKeyword)
+                {
+                    if (lowerName.Contains("high") || lowerName.Contains("alta"))
+                        entry.highpolyParts.Add(child.gameObject);
+                    else
+                        entry.lowpolyParts.Add(child.gameObject);
+                }
+                else
+                {
+                    // Comprovar si actua com una carpeta (té fills i algun fill té la paraula clau)
+                    bool childHasKeyword = false;
+                    foreach (Transform sub in child)
+                    {
+                        string subL = sub.name.ToLower();
+                        if (subL.Contains("low") || subL.Contains("high") || subL.Contains("baixa") || subL.Contains("alta"))
+                        {
+                            childHasKeyword = true;
+                            break;
+                        }
+                    }
+
+                    if (child.childCount > 0 && childHasKeyword)
+                    {
+                        entry.rootFolder = child.gameObject;
+                        foreach (Transform subChild in child)
+                        {
+                            string subL = subChild.name.ToLower();
+                            if (subL.Contains("high") || subL.Contains("alta")) 
+                                entry.highpolyParts.Add(subChild.gameObject);
+                            else if (subL.Contains("low") || subL.Contains("baixa")) 
+                                entry.lowpolyParts.Add(subChild.gameObject);
+                        }
+                        
+                        // Assignar peces orfes dins la carpeta
+                        foreach (Transform subChild in child)
+                        {
+                            if (!entry.highpolyParts.Contains(subChild.gameObject) && !entry.lowpolyParts.Contains(subChild.gameObject))
+                            {
+                                if (entry.lowpolyParts.Count > 0 && entry.highpolyParts.Count == 0)
+                                    entry.highpolyParts.Add(subChild.gameObject);
+                                else if (entry.highpolyParts.Count > 0 && entry.lowpolyParts.Count == 0)
+                                    entry.lowpolyParts.Add(subChild.gameObject);
+                                else if (entry.lowpolyParts.Count == 0)
+                                    entry.lowpolyParts.Add(subChild.gameObject);
+                                else
+                                    entry.highpolyParts.Add(subChild.gameObject);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        // És un model normal sense nom especial, l'assumim com a lowpoly per defecte
+                        entry.lowpolyParts.Add(child.gameObject);
+                    }
+                }
+            }
+
+            models = new List<ModelEntry>(dict.Values);
+        }
+    }
+
     void Start()
     {
-        if (highpolyContainer == null)
-        {
-            Transform t = transform.Find("HighpolyContainer");
-            if (t != null) highpolyContainer = t.gameObject;
-        }
-        if (lowpolyContainer == null)
-        {
-            Transform t = transform.Find("LowpolyContainer");
-            if (t != null) lowpolyContainer = t.gameObject;
-        }
-
-        if (highpolyContainer != null)
-        {
-            foreach (Transform child in highpolyContainer.transform) highpolyModels.Add(child.gameObject);
-        }
-        if (lowpolyContainer != null)
-        {
-            foreach (Transform child in lowpolyContainer.transform) lowpolyModels.Add(child.gameObject);
-        }
-
         materialViewer = gameObject.AddComponent<MaterialViewer>();
         
         SetHighpolyActive(false);
@@ -59,6 +147,7 @@ public class ModelLoader : MonoBehaviour
         }
 
         UpdateActiveModels();
+        AutoFitModel();
     }
 
     public void SetHighpolyActive(bool active)
@@ -66,8 +155,7 @@ public class ModelLoader : MonoBehaviour
         isHighpolyActive = active;
 
         // Mantenim els contenidors actius i apaguem/encenem els fills per separat
-        if (highpolyContainer != null) highpolyContainer.SetActive(true);
-        if (lowpolyContainer != null) lowpolyContainer.SetActive(true);
+        if (modelsContainer != null) modelsContainer.SetActive(true);
 
         UpdateActiveModels();
     }
@@ -76,28 +164,36 @@ public class ModelLoader : MonoBehaviour
     {
         currentModelIndex = index;
         UpdateActiveModels();
+        AutoFitModel();
     }
 
     private void UpdateActiveModels()
     {
         // Apagar-ho tot
-        foreach (var m in highpolyModels) if (m != null) m.SetActive(false);
-        foreach (var m in lowpolyModels) if (m != null) m.SetActive(false);
+        foreach (var entry in models)
+        {
+            if (entry.rootFolder != null) entry.rootFolder.SetActive(false);
+            foreach (var p in entry.lowpolyParts) if (p != null) p.SetActive(false);
+            foreach (var p in entry.highpolyParts) if (p != null) p.SetActive(false);
+        }
 
         // Encendre el model actual en la versió corresponent
-        if (isHighpolyActive)
+        if (currentModelIndex >= 0 && currentModelIndex < models.Count)
         {
-            if (currentModelIndex >= 0 && currentModelIndex < highpolyModels.Count)
-                highpolyModels[currentModelIndex].SetActive(true);
-        }
-        else
-        {
-            if (currentModelIndex >= 0 && currentModelIndex < lowpolyModels.Count)
-                lowpolyModels[currentModelIndex].SetActive(true);
+            ModelEntry current = models[currentModelIndex];
+            if (current.rootFolder != null) current.rootFolder.SetActive(true);
+
+            if (isHighpolyActive)
+            {
+                foreach (var p in current.highpolyParts) if (p != null) p.SetActive(true);
+            }
+            else
+            {
+                foreach (var p in current.lowpolyParts) if (p != null) p.SetActive(true);
+            }
         }
 
         UpdatePolygonCounter();
-        AutoFitModel();
     }
     
     // Per enllaçar amb el botó o Toggle
@@ -123,10 +219,19 @@ public class ModelLoader : MonoBehaviour
 
     public GameObject GetActiveModel()
     {
-        if (isHighpolyActive && currentModelIndex >= 0 && currentModelIndex < highpolyModels.Count)
-            return highpolyModels[currentModelIndex];
-        else if (!isHighpolyActive && currentModelIndex >= 0 && currentModelIndex < lowpolyModels.Count)
-            return lowpolyModels[currentModelIndex];
+        if (currentModelIndex >= 0 && currentModelIndex < models.Count)
+        {
+            ModelEntry current = models[currentModelIndex];
+            if (current.rootFolder != null) return current.rootFolder;
+            
+            // Fallback: retornar una de les peces actives perquè els scripts puguin trobar la malla o materials
+            if (isHighpolyActive && current.highpolyParts.Count > 0)
+                return current.highpolyParts[0];
+            else if (!isHighpolyActive && current.lowpolyParts.Count > 0)
+                return current.lowpolyParts[0];
+            else if (current.lowpolyParts.Count > 0)
+                return current.lowpolyParts[0]; // Últim recurs
+        }
         return null;
     }
 
@@ -161,8 +266,7 @@ public class ModelLoader : MonoBehaviour
             // Update OrbitCamera to support targeting a specific world point instead of a transform, or just use the center
             // Since OrbitCamera targets modelLoaderObj.transform, we can just move modelLoaderObj so the center is 0,0,0
             Vector3 offset = -bounds.center + transform.position;
-            if (highpolyContainer != null) highpolyContainer.transform.position += offset;
-            if (lowpolyContainer != null) lowpolyContainer.transform.position += offset;
+            if (modelsContainer != null) modelsContainer.transform.position += offset;
 
             cam.ResetView(requiredDistance);
         }

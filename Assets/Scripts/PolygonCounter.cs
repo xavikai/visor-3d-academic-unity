@@ -48,5 +48,15 @@ public class PolygonCounter : MonoBehaviour
                 verts += mf.sharedMesh.vertexCount;
             }
         }
+
+        SkinnedMeshRenderer[] skinFilters = model.GetComponentsInChildren<SkinnedMeshRenderer>(true);
+        foreach (SkinnedMeshRenderer smr in skinFilters)
+        {
+            if (smr.sharedMesh != null)
+            {
+                tris += (int)(smr.sharedMesh.GetIndexCount(0) / 3);
+                verts += smr.sharedMesh.vertexCount;
+            }
+        }
     }
 }

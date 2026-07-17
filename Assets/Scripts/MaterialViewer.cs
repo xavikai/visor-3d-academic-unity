@@ -13,6 +13,24 @@ public class MaterialViewer : MonoBehaviour
         public float metallic = 0f;
         public float smoothness = 0.5f;
         public Color emissionColor = Color.black;
+        public Texture occlusionMap;
+        public float occlusionStrength = 1f;
+        public Texture parallaxMap;
+        public float parallaxScale = 0.02f;
+
+        // Per-material UI States
+        public bool albedoToggle = true;
+        public bool normalToggle = true;
+        public float normalSlider = 1f;
+        public bool metallicToggle = true;
+        public float metallicSlider = 0f;
+        public float smoothnessSlider = 0.5f;
+        public bool emissionToggle = true;
+        public float emissionSlider = 1f;
+        public bool occlusionToggle = true;
+        public float occlusionSlider = 1f;
+        public bool heightToggle = true;
+        public float heightSlider = 0.02f;
     }
 
     private Dictionary<Material, OriginalMaterialData> originalData = new Dictionary<Material, OriginalMaterialData>();
@@ -20,6 +38,7 @@ public class MaterialViewer : MonoBehaviour
     private Dictionary<GameObject, Texture2D> modelUVs = new Dictionary<GameObject, Texture2D>();
 
     private Dictionary<Renderer, Material[]> originalMaterials = new Dictionary<Renderer, Material[]>();
+    public Material activeMaterial { get; private set; }
     private Material vertexColorMaterial;
     private bool isVertexColorMode = false;
 
@@ -27,7 +46,7 @@ public class MaterialViewer : MonoBehaviour
     private Material wireframeMaterial;
     private Material checkerboardMaterial;
     private bool isUvMode = false;
-
+    
     public void Initialize()
     {
         originalData.Clear();
@@ -35,6 +54,7 @@ public class MaterialViewer : MonoBehaviour
         originalMaterials.Clear();
         isVertexColorMode = false;
         isUvMode = false;
+        activeMaterial = null;
         
         foreach(var w in wireframeObjects) if(w!=null) Destroy(w);
         wireframeObjects.Clear();
@@ -45,41 +65,68 @@ public class MaterialViewer : MonoBehaviour
         checkerboardMaterial = new Material(Shader.Find("Universal Render Pipeline/Lit"));
         checkerboardMaterial.SetTexture("_BaseMap", CreateCheckerboardTexture());
 
-        // Intentem utilitzar Particles/Unlit que suporta Vertex Color de forma nativa a l'URP
+        
+
         Shader vcShader = Shader.Find("Universal Render Pipeline/Particles/Unlit");
-        if (vcShader == null) vcShader = Shader.Find("UI/Default"); // Fallback
+        if (vcShader == null) vcShader = Shader.Find("UI/Default");
         vertexColorMaterial = new Material(vcShader);
-        if (vertexColorMaterial.HasProperty("_Surface")) vertexColorMaterial.SetFloat("_Surface", 0); // Opac
+        if (vertexColorMaterial.HasProperty("_Surface")) vertexColorMaterial.SetFloat("_Surface", 0);
         if (vertexColorMaterial.HasProperty("_Blend")) vertexColorMaterial.SetFloat("_Blend", 0);
+
+        Dictionary<Material, Material> clonedMaterials = new Dictionary<Material, Material>();
 
         Renderer[] renderers = GetComponentsInChildren<Renderer>(true);
         foreach (Renderer r in renderers)
         {
-            originalMaterials[r] = r.materials;
+            Material[] shared = r.sharedMaterials;
+            Material[] instanced = new Material[shared.Length];
 
-            foreach (Material m in r.materials)
+            for (int i = 0; i < shared.Length; i++)
             {
-                if (!originalData.ContainsKey(m))
+                Material original = shared[i];
+                if (original == null) continue;
+
+                if (!clonedMaterials.ContainsKey(original))
                 {
+                    Material clone = new Material(original);
+                    clone.name = original.name; // Keep name clean
+                    clonedMaterials[original] = clone;
+                    allMaterials.Add(clone);
+
                     OriginalMaterialData data = new OriginalMaterialData();
-                    if (m.HasProperty("_BaseMap")) data.baseMap = m.GetTexture("_BaseMap");
-                    else if (m.HasProperty("_MainTex")) data.baseMap = m.GetTexture("_MainTex");
+                    // We don't store material in OriginalMaterialData as it's not defined
 
-                    if (m.HasProperty("_BumpMap")) data.bumpMap = m.GetTexture("_BumpMap");
-                    if (m.HasProperty("_MetallicGlossMap")) data.metallicGlossMap = m.GetTexture("_MetallicGlossMap");
-                    
-                    if (m.HasProperty("_BumpScale")) data.bumpScale = m.GetFloat("_BumpScale");
-                    if (m.HasProperty("_Metallic")) data.metallic = m.GetFloat("_Metallic");
-                    if (m.HasProperty("_Smoothness")) data.smoothness = m.GetFloat("_Smoothness");
-                    
-                    if (m.HasProperty("_EmissionMap")) data.emissionMap = m.GetTexture("_EmissionMap");
-                    if (m.HasProperty("_EmissionColor")) data.emissionColor = m.GetColor("_EmissionColor");
+                    if (clone.HasProperty("_BaseMap")) data.baseMap = clone.GetTexture("_BaseMap");
+                    else if (clone.HasProperty("_MainTex")) data.baseMap = clone.GetTexture("_MainTex");
 
-                    originalData[m] = data;
-                    allMaterials.Add(m);
+                    if (clone.HasProperty("_BumpMap")) data.bumpMap = clone.GetTexture("_BumpMap");
+                    if (clone.HasProperty("_MetallicGlossMap")) data.metallicGlossMap = clone.GetTexture("_MetallicGlossMap");
+                    
+                    if (clone.HasProperty("_Metallic")) data.metallic = clone.GetFloat("_Metallic");
+                    if (clone.HasProperty("_Smoothness")) data.smoothness = clone.GetFloat("_Smoothness");
+                    else if (clone.HasProperty("_Glossiness")) data.smoothness = clone.GetFloat("_Glossiness");
+
+                    if (clone.HasProperty("_EmissionMap")) data.emissionMap = clone.GetTexture("_EmissionMap");
+                    if (clone.HasProperty("_EmissionColor")) data.emissionColor = clone.GetColor("_EmissionColor");
+                    if (clone.HasProperty("_OcclusionMap")) data.occlusionMap = clone.GetTexture("_OcclusionMap");
+                    if (clone.HasProperty("_ParallaxMap")) data.parallaxMap = clone.GetTexture("_ParallaxMap");
+
+                    // UI States
+                    data.metallicSlider = data.metallic;
+                    data.smoothnessSlider = data.smoothness;
+                    data.heightSlider = data.parallaxScale;
+
+                    originalData[clone] = data;
                 }
+
+                instanced[i] = clonedMaterials[original];
             }
+
+            r.sharedMaterials = instanced;
+            originalMaterials[r] = instanced;
         }
+
+        if (allMaterials.Count > 0) activeMaterial = allMaterials[0];
 
         // Generar Wireframes
         MeshFilter[] filters = GetComponentsInChildren<MeshFilter>(true);
@@ -127,114 +174,191 @@ public class MaterialViewer : MonoBehaviour
 
     public void ToggleAlbedo(bool state)
     {
-        foreach (Material m in allMaterials)
+        Debug.Log($"ToggleAlbedo called with state={state}. activeMaterial is null? {activeMaterial == null}");
+        if (activeMaterial == null || !originalData.ContainsKey(activeMaterial)) 
         {
-            if (m.HasProperty("_BaseMap"))
-                m.SetTexture("_BaseMap", state ? originalData[m].baseMap : null);
+            Debug.Log("ToggleAlbedo aborting because activeMaterial is null or not in originalData.");
+            return;
+        }
+
+        originalData[activeMaterial].albedoToggle = state;
+        
+        if (activeMaterial.HasProperty("_BaseMap"))
+        {
+            Debug.Log("ToggleAlbedo setting _BaseMap");
+            activeMaterial.SetTexture("_BaseMap", state ? originalData[activeMaterial].baseMap : null);
+        }
+        else if (activeMaterial.HasProperty("_MainTex"))
+        {
+            Debug.Log("ToggleAlbedo setting _MainTex");
+            activeMaterial.SetTexture("_MainTex", state ? originalData[activeMaterial].baseMap : null);
+        }
+        else
+        {
+            Debug.Log("ToggleAlbedo material has no _BaseMap or _MainTex!");
         }
     }
 
     public void ToggleNormal(bool state)
     {
-        foreach (Material m in allMaterials)
-        {
-            if (m.HasProperty("_BumpMap"))
-                m.SetTexture("_BumpMap", state ? originalData[m].bumpMap : null);
-            
-            if (state && originalData[m].bumpMap != null) m.EnableKeyword("_NORMALMAP");
-            else m.DisableKeyword("_NORMALMAP");
-        }
+        if (activeMaterial == null || !originalData.ContainsKey(activeMaterial)) return;
+        originalData[activeMaterial].normalToggle = state;
+
+        if (activeMaterial.HasProperty("_BumpMap"))
+            activeMaterial.SetTexture("_BumpMap", state ? originalData[activeMaterial].bumpMap : null);
+        
+        if (state && originalData[activeMaterial].bumpMap != null) activeMaterial.EnableKeyword("_NORMALMAP");
+        else activeMaterial.DisableKeyword("_NORMALMAP");
     }
 
     public void ToggleMetallic(bool state)
     {
-        foreach (Material m in allMaterials)
+        if (activeMaterial == null || !originalData.ContainsKey(activeMaterial)) return;
+        originalData[activeMaterial].metallicToggle = state;
+
+        if (activeMaterial.HasProperty("_MetallicGlossMap"))
+            activeMaterial.SetTexture("_MetallicGlossMap", state ? originalData[activeMaterial].metallicGlossMap : null);
+        
+        if (state && originalData[activeMaterial].metallicGlossMap != null) activeMaterial.EnableKeyword("_METALLICSPECGLOSSMAP");
+        else activeMaterial.DisableKeyword("_METALLICSPECGLOSSMAP");
+        
+        if (activeMaterial.HasProperty("_Metallic"))
         {
-            if (m.HasProperty("_MetallicGlossMap"))
-                m.SetTexture("_MetallicGlossMap", state ? originalData[m].metallicGlossMap : null);
-            
-            if (state && originalData[m].metallicGlossMap != null) m.EnableKeyword("_METALLICSPECGLOSSMAP");
-            else m.DisableKeyword("_METALLICSPECGLOSSMAP");
-            
-            // Força que si desactivem el mapa de metall, no es quedi 100% metàl·lic per culpa d'un valor base alt
-            if (m.HasProperty("_Metallic"))
-            {
-                // Si s'activa, restaura l'original, sinó el posa a 0 perquè no brilli per defecte
-                m.SetFloat("_Metallic", state ? originalData[m].metallic : 0f);
-            }
+            activeMaterial.SetFloat("_Metallic", state ? originalData[activeMaterial].metallicSlider : 0f);
         }
     }
 
     public void SetNormalIntensity(float value)
     {
-        foreach (Material m in allMaterials)
-        {
-            if (m.HasProperty("_BumpScale"))
-                m.SetFloat("_BumpScale", originalData[m].bumpScale * value);
-        }
+        if (activeMaterial == null || !originalData.ContainsKey(activeMaterial)) return;
+        originalData[activeMaterial].normalSlider = value;
+        
+        if (activeMaterial.HasProperty("_BumpScale"))
+            activeMaterial.SetFloat("_BumpScale", originalData[activeMaterial].bumpScale * value);
     }
 
     public void SetMetallic(float value)
     {
-        foreach (Material m in allMaterials)
-        {
-            if (m.HasProperty("_Metallic"))
-                m.SetFloat("_Metallic", value);
-        }
+        if (activeMaterial == null || !originalData.ContainsKey(activeMaterial)) return;
+        originalData[activeMaterial].metallicSlider = value;
+        
+        if (activeMaterial.HasProperty("_Metallic"))
+            activeMaterial.SetFloat("_Metallic", value);
     }
 
     public void SetSmoothness(float value)
     {
-        foreach (Material m in allMaterials)
-        {
-            if (m.HasProperty("_Smoothness"))
-                m.SetFloat("_Smoothness", value);
-        }
+        if (activeMaterial == null || !originalData.ContainsKey(activeMaterial)) return;
+        originalData[activeMaterial].smoothnessSlider = value;
+        
+        if (activeMaterial.HasProperty("_Smoothness"))
+            activeMaterial.SetFloat("_Smoothness", value);
+        else if (activeMaterial.HasProperty("_Glossiness"))
+            activeMaterial.SetFloat("_Glossiness", value);
     }
 
     public void ToggleEmission(bool state)
     {
-        foreach (Material m in allMaterials)
-        {
-            if (m.HasProperty("_EmissionMap"))
-                m.SetTexture("_EmissionMap", state ? originalData[m].emissionMap : null);
-            
-            if (state) m.EnableKeyword("_EMISSION");
-            else m.DisableKeyword("_EMISSION");
-        }
+        if (activeMaterial == null || !originalData.ContainsKey(activeMaterial)) return;
+        originalData[activeMaterial].emissionToggle = state;
+
+        if (activeMaterial.HasProperty("_EmissionMap"))
+            activeMaterial.SetTexture("_EmissionMap", state ? originalData[activeMaterial].emissionMap : null);
+        
+        if (state) activeMaterial.EnableKeyword("_EMISSION");
+        else activeMaterial.DisableKeyword("_EMISSION");
     }
 
     public void SetEmissionIntensity(float value)
     {
-        foreach (Material m in allMaterials)
-        {
-            if (m.HasProperty("_EmissionColor"))
-                m.SetColor("_EmissionColor", originalData[m].emissionColor * value);
-        }
+        if (activeMaterial == null || !originalData.ContainsKey(activeMaterial)) return;
+        originalData[activeMaterial].emissionSlider = value;
+
+        if (activeMaterial.HasProperty("_EmissionColor"))
+            activeMaterial.SetColor("_EmissionColor", originalData[activeMaterial].emissionColor * value);
+    }
+
+    public void ToggleOcclusion(bool state)
+    {
+        if (activeMaterial == null || !originalData.ContainsKey(activeMaterial)) return;
+        originalData[activeMaterial].occlusionToggle = state;
+
+        if (activeMaterial.HasProperty("_OcclusionMap"))
+            activeMaterial.SetTexture("_OcclusionMap", state ? originalData[activeMaterial].occlusionMap : null);
+    }
+
+    public void SetOcclusionIntensity(float value)
+    {
+        if (activeMaterial == null || !originalData.ContainsKey(activeMaterial)) return;
+        originalData[activeMaterial].occlusionSlider = value;
+
+        if (activeMaterial.HasProperty("_OcclusionStrength"))
+            activeMaterial.SetFloat("_OcclusionStrength", originalData[activeMaterial].occlusionStrength * value);
+    }
+
+    public void ToggleHeight(bool state)
+    {
+        if (activeMaterial == null || !originalData.ContainsKey(activeMaterial)) return;
+        originalData[activeMaterial].heightToggle = state;
+
+        if (activeMaterial.HasProperty("_ParallaxMap"))
+            activeMaterial.SetTexture("_ParallaxMap", state ? originalData[activeMaterial].parallaxMap : null);
+        
+        if (state && originalData[activeMaterial].parallaxMap != null) activeMaterial.EnableKeyword("_PARALLAXMAP");
+        else activeMaterial.DisableKeyword("_PARALLAXMAP");
+    }
+
+    public void SetHeightScale(float value)
+    {
+        if (activeMaterial == null || !originalData.ContainsKey(activeMaterial)) return;
+        originalData[activeMaterial].heightSlider = value;
+
+        if (activeMaterial.HasProperty("_Parallax"))
+            activeMaterial.SetFloat("_Parallax", value);
     }
 
     // Per la galeria de textures 2D
     public OriginalMaterialData GetFirstMaterialData()
     {
+        if (activeMaterial != null && originalData.ContainsKey(activeMaterial))
+            return originalData[activeMaterial];
         if (allMaterials.Count > 0 && originalData.ContainsKey(allMaterials[0]))
             return originalData[allMaterials[0]];
         return null;
     }
 
-    public OriginalMaterialData GetActiveMaterialData(GameObject activeModel)
+    public void SetActiveMaterial(Material mat)
     {
+        if (mat != null && originalData.ContainsKey(mat))
+        {
+            activeMaterial = mat;
+        }
+    }
+
+    public List<Material> GetMaterialsForModel(GameObject activeModel)
+    {
+        List<Material> list = new List<Material>();
         if (activeModel != null)
         {
             Renderer[] renderers = activeModel.GetComponentsInChildren<Renderer>(false);
-            if (renderers.Length > 0)
+            foreach (Renderer r in renderers)
             {
-                foreach (Material m in renderers[0].sharedMaterials)
+                foreach (Material m in r.sharedMaterials)
                 {
-                    if (m != null && originalData.ContainsKey(m))
-                        return originalData[m];
+                    if (m != null && !list.Contains(m) && originalData.ContainsKey(m))
+                    {
+                        list.Add(m);
+                    }
                 }
             }
         }
+        return list;
+    }
+
+    public OriginalMaterialData GetActiveMaterialData(GameObject activeModel)
+    {
+        if (activeMaterial != null && originalData.ContainsKey(activeMaterial))
+            return originalData[activeMaterial];
         return GetFirstMaterialData();
     }
 
@@ -267,9 +391,9 @@ public class MaterialViewer : MonoBehaviour
 
             if (isUvMode)
             {
-                Material[] vMats = new Material[kvp.Value.Length];
-                for (int i = 0; i < vMats.Length; i++) vMats[i] = checkerboardMaterial;
-                r.materials = vMats;
+                Material[] uvMats = new Material[kvp.Value.Length];
+                for (int i = 0; i < uvMats.Length; i++) uvMats[i] = checkerboardMaterial;
+                r.sharedMaterials = uvMats;
             }
             else if (isVertexColorMode)
             {

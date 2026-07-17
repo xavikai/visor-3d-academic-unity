@@ -101,9 +101,13 @@ public class OrbitCamera : MonoBehaviour
                 // Zoom (Rodeta)
                 if (scroll.y != 0)
                 {
-                    // El zoom s'escala logarítmicament segons la distància perquè sigui precís en objectes minúsculs i ràpid en gegants
-                    float adjustedZoomSens = zoomSensitivity * currentDistance * 0.005f;
-                    targetDistance -= scroll.y * adjustedZoomSens;
+                    float scrollMag = scroll.y;
+                    // Alguns sistemes retornen 1 en lloc de 120 per "clic" de la rodeta. Normalitzem.
+                    if (Mathf.Abs(scrollMag) > 0.01f && Mathf.Abs(scrollMag) < 10f) scrollMag *= 120f;
+
+                    // Reduït a la meitat de l'anterior un altre cop: 0.00075f
+                    float adjustedZoomSens = zoomSensitivity * currentDistance * 0.00075f;
+                    targetDistance -= scrollMag * adjustedZoomSens;
                     targetDistance = Mathf.Clamp(targetDistance, 0.01f, 5000f);
                 }
             }
