@@ -1,122 +1,97 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
-    <Style src="project://database/Assets/Settings/MainUI.uss" />
-    
-    <ui:VisualElement name="MainContainer" class="main-container" picking-mode="Ignore">
-        <!-- Esquerra: Controls -->
+    <Style src="project://database/Assets/Settings/MainUI.uss?fileID=7433441132597879392&amp;guid=fac4751f231ed5148a3111d115fc922d&amp;type=3#MainUI"/>
+    <ui:VisualElement name="MainContainer" picking-mode="Ignore" class="main-container">
         <ui:VisualElement name="LeftPanel" class="panel side-panel">
-            <ui:Label text="Model Viewer Pro" class="header-title" />
-            
+            <ui:Label text="Model Viewer Pro" class="header-title"/>
             <ui:VisualElement class="controls-scroll">
-                <ui:DropdownField name="ModelDropdown" label="Model" class="control-element" />
-
+                <ui:DropdownField name="ModelDropdown" label="Model" class="control-element"/>
                 <ui:VisualElement class="section">
-                    <ui:Toggle name="HighpolyToggle" label="Show Highpoly" class="control-element" />
+                    <ui:Toggle name="HighpolyToggle" label="Show Highpoly" class="control-element"/>
                 </ui:VisualElement>
-
                 <ui:VisualElement class="section">
-                    <ui:Label text="Material Channels" class="section-title" />
-                    
-                    <ui:DropdownField name="MaterialDropdown" label="Material" class="control-element" />
-                    
-                    <ui:Toggle name="AlbedoToggle" label="Albedo" class="control-element" value="true" />
-                    
+                    <ui:Label text="Material Channels" class="section-title"/>
+                    <ui:DropdownField name="MaterialDropdown" label="Material" class="control-element"/>
+                    <ui:Toggle name="AlbedoToggle" label="Albedo" value="true" class="control-element"/>
                     <ui:VisualElement class="row-group">
-                        <ui:Toggle name="NormalToggle" label="Normal Map" class="control-element half-toggle" value="true" />
-                        <ui:Slider name="NormalSlider" class="control-element slider compact-slider" high-value="2" low-value="0" value="1" />
+                        <ui:Toggle name="NormalToggle" label="Normal Map" value="true" class="control-element half-toggle"/>
+                        <ui:Slider name="NormalSlider" high-value="2" low-value="0" value="1" class="control-element slider compact-slider"/>
                     </ui:VisualElement>
-                    
                     <ui:VisualElement class="row-group">
-                        <ui:Toggle name="MetallicToggle" label="Metallic Map" class="control-element half-toggle" value="true" />
-                        <ui:Slider name="MetallicSlider" class="control-element slider compact-slider" high-value="1" low-value="0" value="0" />
+                        <ui:Toggle name="MetallicToggle" label="Metallic Map" value="true" class="control-element half-toggle"/>
+                        <ui:Slider name="MetallicSlider" high-value="1" low-value="0" value="0" class="control-element slider compact-slider"/>
                     </ui:VisualElement>
-                    
                     <ui:VisualElement class="row-group">
-                        <ui:Slider name="SmoothnessSlider" label="Smoothness" class="control-element slider full-slider" high-value="1" low-value="0" value="0.5" />
+                        <ui:Slider name="SmoothnessSlider" label="Smoothness" high-value="1" low-value="0" value="0.5" class="control-element slider full-slider"/>
                     </ui:VisualElement>
-                    
                     <ui:VisualElement class="row-group">
-                        <ui:Toggle name="EmissionToggle" label="Emission" class="control-element half-toggle" value="true" />
-                        <ui:Slider name="EmissionSlider" class="control-element slider compact-slider" high-value="5" low-value="0" value="1" />
+                        <ui:Toggle name="EmissionToggle" label="Emission" value="true" class="control-element half-toggle"/>
+                        <ui:Slider name="EmissionSlider" high-value="5" low-value="0" value="1" class="control-element slider compact-slider"/>
                     </ui:VisualElement>
-                    
                     <ui:VisualElement class="row-group">
-                        <ui:Toggle name="OcclusionToggle" label="Occlusion Map" class="control-element half-toggle" value="true" />
-                        <ui:Slider name="OcclusionSlider" class="control-element slider compact-slider" high-value="1" low-value="0" value="1" />
+                        <ui:Toggle name="OcclusionToggle" label="Occlusion Map" value="true" class="control-element half-toggle"/>
+                        <ui:Slider name="OcclusionSlider" high-value="1" low-value="0" value="1" class="control-element slider compact-slider"/>
                     </ui:VisualElement>
-                    
                     <ui:VisualElement class="row-group">
-                        <ui:Toggle name="HeightToggle" label="Height Map" class="control-element half-toggle" value="true" />
-                        <ui:Slider name="HeightSlider" class="control-element slider compact-slider" high-value="0.1" low-value="0" value="0.02" />
+                        <ui:Toggle name="HeightToggle" label="Height Map" value="true" class="control-element half-toggle"/>
+                        <ui:Slider name="HeightSlider" high-value="0.1" low-value="0" value="0.02" class="control-element slider compact-slider"/>
                     </ui:VisualElement>
                 </ui:VisualElement>
-
                 <ui:VisualElement class="section">
-                    <ui:Label text="Advanced Parameters" class="section-title" />
-                    <ui:Toggle name="WireframeToggle" label="Wireframe" class="control-element" />
-                    <ui:Toggle name="VertexColorToggle" label="Vertex Color" class="control-element" />
-                    <ui:Toggle name="UvToggle" label="UV Layout" class="control-element" />
+                    <ui:Label text="Advanced Parameters" class="section-title"/>
+                    <ui:Toggle name="WireframeToggle" label="Wireframe" class="control-element"/>
+                    <ui:Toggle name="VertexColorToggle" label="Vertex Color" class="control-element"/>
+                    <ui:Toggle name="UvToggle" label="UV Layout" class="control-element"/>
                 </ui:VisualElement>
-                
-                <ui:VisualElement class="flex-spacer" />
-                
+                <ui:VisualElement class="flex-spacer"/>
                 <ui:VisualElement class="section stats-section">
-                    <ui:Label name="StatsText" text="Highpoly:&#10;0 tris | 0 verts&#10;&#10;Lowpoly:&#10;0 tris | 0 verts" class="stats-text" />
+                    <ui:Label name="StatsText" text="Highpoly:&#10;0 tris | 0 verts&#10;&#10;Lowpoly:&#10;0 tris | 0 verts" class="stats-text"/>
                 </ui:VisualElement>
             </ui:VisualElement>
         </ui:VisualElement>
-
-        <!-- Right: Texture Gallery -->
         <ui:VisualElement name="RightPanel" class="panel right-panel">
-            <ui:Label text="Material Maps" class="section-title text-center" />
-            
+            <ui:Label text="Material Maps" class="section-title text-center"/>
             <ui:VisualElement class="gallery-scroll">
                 <ui:VisualElement class="texture-item">
-                    <ui:Label text="Albedo" class="texture-label" />
-                    <ui:Image name="ImgAlbedo" class="texture-preview" />
+                    <ui:Label text="Albedo" class="texture-label"/>
+                    <ui:Image name="ImgAlbedo" class="texture-preview"/>
                 </ui:VisualElement>
-                
                 <ui:VisualElement class="texture-item">
-                    <ui:Label text="Normal Map" class="texture-label" />
-                    <ui:Image name="ImgNormal" class="texture-preview" />
+                    <ui:Label text="Normal Map" class="texture-label"/>
+                    <ui:Image name="ImgNormal" class="texture-preview"/>
                 </ui:VisualElement>
-                
                 <ui:VisualElement class="texture-item">
-                    <ui:Label text="Metallic / Smoothness" class="texture-label" />
-                    <ui:Image name="ImgMetallic" class="texture-preview" />
+                    <ui:Label text="Metallic / Smoothness" class="texture-label"/>
+                    <ui:Image name="ImgMetallic" class="texture-preview"/>
                 </ui:VisualElement>
-
                 <ui:VisualElement class="texture-item">
-                    <ui:Label text="Emission" class="texture-label" />
-                    <ui:Image name="ImgEmission" class="texture-preview" />
+                    <ui:Label text="Emission" class="texture-label"/>
+                    <ui:Image name="ImgEmission" class="texture-preview"/>
                 </ui:VisualElement>
-                
                 <ui:VisualElement class="texture-item">
-                    <ui:Label text="Occlusion Map" class="texture-label" />
-                    <ui:Image name="ImgOcclusion" class="texture-preview" />
+                    <ui:Label text="Occlusion Map" class="texture-label"/>
+                    <ui:Image name="ImgOcclusion" class="texture-preview"/>
                 </ui:VisualElement>
-                
                 <ui:VisualElement class="texture-item">
-                    <ui:Label text="Height Map" class="texture-label" />
-                    <ui:Image name="ImgHeight" class="texture-preview" />
+                    <ui:Label text="Height Map" class="texture-label"/>
+                    <ui:Image name="ImgHeight" class="texture-preview"/>
                 </ui:VisualElement>
-                
                 <ui:VisualElement class="texture-item">
-                    <ui:Label text="UV Layout" class="texture-label" />
-                    <ui:Image name="ImgUv" class="texture-preview" />
+                    <ui:Label text="UV Layout" class="texture-label"/>
+                    <ui:Image name="ImgUv" class="texture-preview"/>
                 </ui:VisualElement>
             </ui:VisualElement>
+            <ui:VisualElement class="logo-container">
+                <ui:Image name="SchoolLogo" class="school-logo" style="background-image: url(&quot;project://database/Assets/Logo/logocifog.png?fileID=2800000&amp;guid=14e0ed103e7a28043a00ea16409781fb&amp;type=3#logocifog&quot;);"/>
+            </ui:VisualElement>
         </ui:VisualElement>
-        
-        <!-- Zoom Modal (hidden by default) -->
         <ui:VisualElement name="ZoomPanel" class="zoom-modal" style="display: none;">
             <ui:VisualElement class="zoom-content">
                 <ui:VisualElement class="zoom-header">
-                    <ui:Label name="ZoomTitle" text="Texture Title" class="header-title" />
-                    <ui:Button name="BtnCloseZoom" text="X" class="close-btn" />
+                    <ui:Label name="ZoomTitle" text="Texture Title" class="header-title"/>
+                    <ui:Button name="BtnCloseZoom" text="X" class="close-btn"/>
                 </ui:VisualElement>
-                <ui:Image name="ImgZoom" class="zoom-image" />
+                <ui:Image name="ImgZoom" class="zoom-image"/>
             </ui:VisualElement>
         </ui:VisualElement>
-
     </ui:VisualElement>
 </ui:UXML>

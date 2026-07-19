@@ -298,3 +298,17 @@
     background-color: black;
     border-radius: 8px;
 }
+
+/* Logo de l'Escola */
+.logo-container {
+    margin-top: auto;
+    margin-bottom: 0px;
+    align-items: center;
+    justify-content: center;
+}
+
+.school-logo {
+    width: 100px;
+    height: 100px;
+    -unity-background-scale-mode: scale-to-fit;
+}
