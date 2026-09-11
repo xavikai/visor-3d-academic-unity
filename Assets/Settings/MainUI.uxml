@@ -3,10 +3,39 @@
     <ui:VisualElement name="MainContainer" picking-mode="Ignore" class="main-container">
         <ui:VisualElement name="LeftPanel" class="panel side-panel">
             <ui:Label text="Model Viewer Pro" class="header-title"/>
-            <ui:VisualElement class="controls-scroll">
+            <ui:ScrollView class="controls-scroll" mode="Vertical" horizontal-scroller-visibility="Hidden">
                 <ui:DropdownField name="ModelDropdown" label="Model" class="control-element"/>
                 <ui:VisualElement class="section">
                     <ui:Toggle name="HighpolyToggle" label="Show Highpoly" class="control-element"/>
+                </ui:VisualElement>
+                <ui:Foldout name="EnvironmentControls" text="Fons i HDRI" value="true" class="section lighting-section">
+                    <ui:DropdownField name="BackgroundChoice" label="Fons" class="control-element"/>
+                    <ui:Toggle name="HdriEnabled" label="Activar HDRI" class="control-element"/>
+                    <ui:Toggle name="ShowHdriBackground" label="Mostrar de fons" class="control-element"/>
+                    <ui:Slider name="HdriIntensity" label="Intensitat" low-value="0" high-value="3" class="control-element slider"/>
+                    <ui:Slider name="HdriRotation" label="Rotació" low-value="0" high-value="360" class="control-element slider"/>
+                    <ui:Label name="EnvironmentStatus" class="export-status"/>
+                    <ui:Button name="ResetEnvironment" text="Restablir fons i HDRI" class="export-button"/>
+                </ui:Foldout>
+                <ui:Foldout name="LightingControls" text="Llums de 3 punts" value="false" class="section lighting-section">
+                    <ui:DropdownField name="SelectedLight" label="Llum" class="control-element"/>
+                    <ui:Toggle name="LightEnabled" label="Encesa" value="true" class="control-element"/>
+                    <ui:Slider name="LightAzimuth" label="Angle" low-value="-180" high-value="180" class="control-element slider"/>
+                    <ui:Slider name="LightElevation" label="Altura" low-value="-75" high-value="75" class="control-element slider"/>
+                    <ui:Slider name="LightDistance" label="Distància" low-value="1.5" high-value="6" class="control-element slider"/>
+                    <ui:Slider name="LightIntensity" label="Intensitat" low-value="0" high-value="5" class="control-element slider"/>
+                    <ui:DropdownField name="LightColor" label="Color" class="control-element"/>
+                    <ui:Label name="LightSummary" class="export-status"/>
+                    <ui:Button name="ResetLighting" text="Restablir les 3 llums" class="export-button"/>
+                </ui:Foldout>
+                <ui:VisualElement class="section">
+                    <ui:Label text="Turnaround 360°" class="section-title"/>
+                    <ui:DropdownField name="TurntableResolution" label="Vídeo" class="control-element"/>
+                    <ui:DropdownField name="TurntableDuration" label="Durada" class="control-element"/>
+                    <ui:Button name="ExportTurntable" text="Exportar vídeo 360°" class="export-button"/>
+                    <ui:Button name="CancelTurntable" text="Cancel·lar gravació" class="export-button" style="display: none;"/>
+                    <ui:Button name="RevealTurntable" text="Mostrar el vídeo" class="export-button" style="display: none;"/>
+                    <ui:Label name="TurntableStatus" text="MP4 · 30 fps · sense interfície" class="export-status"/>
                 </ui:VisualElement>
                 <ui:VisualElement class="section">
                     <ui:Label text="Material Channels" class="section-title"/>
@@ -40,13 +69,13 @@
                     <ui:Label text="Advanced Parameters" class="section-title"/>
                     <ui:Toggle name="WireframeToggle" label="Wireframe" class="control-element"/>
                     <ui:Toggle name="VertexColorToggle" label="Vertex Color" class="control-element"/>
-                    <ui:Toggle name="UvToggle" label="UV Layout" class="control-element"/>
+                    <ui:Toggle name="UvToggle" label="UV Checker" class="control-element"/>
                 </ui:VisualElement>
                 <ui:VisualElement class="flex-spacer"/>
                 <ui:VisualElement class="section stats-section">
                     <ui:Label name="StatsText" text="Highpoly:&#10;0 tris | 0 verts&#10;&#10;Lowpoly:&#10;0 tris | 0 verts" class="stats-text"/>
                 </ui:VisualElement>
-            </ui:VisualElement>
+            </ui:ScrollView>
         </ui:VisualElement>
         <ui:VisualElement name="RightPanel" class="panel right-panel">
             <ui:Label text="Material Maps" class="section-title text-center"/>

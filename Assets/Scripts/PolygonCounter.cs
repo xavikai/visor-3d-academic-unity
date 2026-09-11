@@ -2,7 +2,6 @@ using UnityEngine;
 
 public class PolygonCounter : MonoBehaviour
 {
-    public Evaluator evaluator;
     public int totalTriangles = 0;
     public int totalVertices = 0;
     
@@ -11,24 +10,7 @@ public class PolygonCounter : MonoBehaviour
     public void SetModel(GameObject model)
     {
         currentModel = model;
-    }
-
-    public void AnalitzarMalla()
-    {
-        if (currentModel == null)
-        {
-            Debug.LogError("No hi ha cap model assignat per avaluar. L'alumne no ha afegit res.");
-            return;
-        }
-
-        GetStats(currentModel, out totalTriangles, out totalVertices);
-
-        Debug.Log($"Vèrtexs: {totalVertices}, Triangles: {totalTriangles}");
-
-        if (evaluator != null)
-        {
-            evaluator.Avaluar(totalTriangles, totalVertices);
-        }
+        GetStats(model, out totalTriangles, out totalVertices);
     }
 
     public void GetStats(GameObject model, out int tris, out int verts)
@@ -44,7 +26,7 @@ public class PolygonCounter : MonoBehaviour
             if (mf.sharedMesh != null)
             {
                 // Utilitzem GetIndexCount en comptes de triangles.Length per evitar errors si Read/Write està desactivat accidentalment
-                tris += (int)(mf.sharedMesh.GetIndexCount(0) / 3);
+                tris += CountTriangles(mf.sharedMesh);
                 verts += mf.sharedMesh.vertexCount;
             }
         }
@@ -54,9 +36,18 @@ public class PolygonCounter : MonoBehaviour
         {
             if (smr.sharedMesh != null)
             {
-                tris += (int)(smr.sharedMesh.GetIndexCount(0) / 3);
+                tris += CountTriangles(smr.sharedMesh);
                 verts += smr.sharedMesh.vertexCount;
             }
         }
+    }
+
+    private static int CountTriangles(Mesh mesh)
+    {
+        int count = 0;
+        for (int sub = 0; sub < mesh.subMeshCount; sub++)
+            if (mesh.GetTopology(sub) == MeshTopology.Triangles)
+                count += (int)(mesh.GetIndexCount(sub) / 3);
+        return count;
     }
 }

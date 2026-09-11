@@ -23,10 +23,11 @@ public class OrbitCamera : MonoBehaviour
     
     private Vector3 currentPan;
     private Vector3 targetPan;
+    private Vector3 focusCenter;
 
     private bool isInteractingWithUI = false;
 
-    void Start()
+    void Awake()
     {
         Vector3 angles = transform.eulerAngles;
         targetX = currentX = angles.y;
@@ -67,14 +68,16 @@ public class OrbitCamera : MonoBehaviour
             // Tecla F per centrar (Focus)
             if (Keyboard.current != null && Keyboard.current.fKey.wasPressedThisFrame)
             {
-                targetPan = Vector3.zero;
+                targetPan = focusCenter;
                 targetDistance = defaultDistance;
             }
 
             Vector2 delta = Mouse.current.delta.ReadValue();
             Vector2 scroll = Mouse.current.scroll.ReadValue();
 
-            if (!isInteractingWithUI)
+            bool pointerOverUI = UnityEngine.EventSystems.EventSystem.current != null &&
+                UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject();
+            if (!isInteractingWithUI && !pointerOverUI)
             {
                 // Rotació (Clic esquerre)
                 if (Mouse.current.leftButton.isPressed)
@@ -130,10 +133,16 @@ public class OrbitCamera : MonoBehaviour
 
     public void ResetView(float newDistance)
     {
-        targetDistance = Mathf.Clamp(newDistance, 0.01f, 5000f);
+        Focus(focusCenter, newDistance);
+    }
+
+    public void Focus(Vector3 center, float newDistance)
+    {
+        focusCenter = center;
+        targetDistance = Mathf.Max(newDistance, 0.01f);
         currentDistance = targetDistance; // Aplicar a l'instant
-        targetPan = Vector3.zero;
-        currentPan = Vector3.zero; // Aplicar a l'instant
+        targetPan = center;
+        currentPan = center;
         defaultDistance = targetDistance;
     }
 }

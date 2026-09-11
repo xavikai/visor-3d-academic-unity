@@ -44,12 +44,18 @@ public class StudentUIHook : MonoBehaviour
 
     private System.Collections.Generic.List<RenderTexture> activeRenderTextures = new System.Collections.Generic.List<RenderTexture>();
 
-    private void OnEnable()
+    private void BindUI()
     {
         uiDocument = GetComponent<UIDocument>();
         if (uiDocument == null) return;
 
         var root = uiDocument.rootVisualElement;
+        var environment = GetComponent<ViewerEnvironmentUI>() ?? gameObject.AddComponent<ViewerEnvironmentUI>();
+        environment.Bind(root, modelLoader);
+        var turntable = GetComponent<TurntableUI>() ?? gameObject.AddComponent<TurntableUI>();
+        turntable.Bind(root, modelLoader);
+        var lighting = GetComponent<StudioLightingUI>() ?? gameObject.AddComponent<StudioLightingUI>();
+        lighting.Bind(root, modelLoader);
 
         // Cercar elements
         albedoToggle = root.Q<Toggle>("AlbedoToggle");
@@ -129,44 +135,65 @@ public class StudentUIHook : MonoBehaviour
         if (heightSlider != null && heightToggle != null) heightSlider.SetEnabled(heightToggle.value);
 
         UpdateStats();
-        Invoke("PopulateMaterialDropdown", 0.5f); // Donem mig segon perquè s'inicialitzi el model actiu
-        Debug.Log("StudentUIHook OnEnable completed successfully.");
+    }
+
+    private bool started;
+    private VisualElement boundRoot;
+
+    private void OnEnable()
+    {
+        if (modelLoader != null) modelLoader.ModelChanged += RefreshSelection;
+        if (started) EnsureUI();
     }
 
     private void Start()
     {
-        Debug.Log($"StudentUIHook Start: modelDropdown={modelDropdown != null}, modelLoader={modelLoader != null}");
-        if (modelDropdown != null && modelLoader != null)
+        started = true;
+        EnsureUI();
+    }
+
+    private void EnsureUI()
+    {
+        uiDocument = GetComponent<UIDocument>();
+        if (uiDocument == null) return;
+        if (boundRoot != uiDocument.rootVisualElement)
         {
-            modelDropdown.choices.Clear();
-            if (modelLoader.models != null)
-            {
-                Debug.Log($"StudentUIHook: modelLoader has {modelLoader.models.Count} models");
-                foreach (var entry in modelLoader.models)
-                {
-                    modelDropdown.choices.Add(entry.name);
-                }
-            }
-            
-            Debug.Log($"StudentUIHook: dropdown has {modelDropdown.choices.Count} choices");
-            if (modelDropdown.choices.Count > 0)
-            {
-                modelDropdown.index = 0;
-                Debug.Log($"StudentUIHook: dropdown value set to {modelDropdown.value}, index is {modelDropdown.index}");
-                UpdateStats();
-            }
+            boundRoot = uiDocument.rootVisualElement;
+            BindUI();
         }
+        RefreshSelection();
+    }
+
+    private void RefreshSelection()
+    {
+        if (modelDropdown == null || modelLoader == null || !modelLoader.IsReady) return;
+        modelDropdown.choices = modelLoader.models.ConvertAll(entry => entry.name);
+        modelDropdown.SetEnabled(modelDropdown.choices.Count > 0);
+        modelDropdown.SetValueWithoutNotify(modelLoader.CurrentModelIndex >= 0
+            ? modelDropdown.choices[modelLoader.CurrentModelIndex] : "Cap model al catàleg");
+        if (highpolyToggle != null)
+        {
+            highpolyToggle.SetValueWithoutNotify(modelLoader.IsHighpolyActive);
+            highpolyToggle.SetEnabled(modelLoader.HasBothVariants);
+            highpolyToggle.tooltip = modelLoader.HasBothVariants ? "Alternar lowpoly / highpoly" : "Només hi ha una variant disponible";
+        }
+        CloseZoom();
+        UpdateStats();
+        PopulateMaterialDropdown();
     }
 
     private void OnDisable()
     {
-        if (btnCloseZoom != null) btnCloseZoom.clicked -= CloseZoom;
+        if (modelLoader != null) modelLoader.ModelChanged -= RefreshSelection;
+        CancelInvoke();
+        CloseZoom();
+        ClearRenderTextures();
     }
-
     public void UpdateTextureGallery()
     {
         if (modelLoader == null || modelLoader.materialViewer == null) return;
 
+        CloseZoom();
         ClearRenderTextures();
 
         var data = modelLoader.materialViewer.GetActiveMaterialData(modelLoader.GetActiveModel());
@@ -264,6 +291,7 @@ public class StudentUIHook : MonoBehaviour
     private void CloseZoom()
     {
         if (zoomPanel != null) zoomPanel.style.display = DisplayStyle.None;
+        if (imgZoom != null) imgZoom.image = null;
     }
 
     public void UpdateStats()
@@ -318,8 +346,6 @@ public class StudentUIHook : MonoBehaviour
         if (modelLoader != null)
         {
             modelLoader.ToggleHighpoly(state);
-            UpdateStats();
-            PopulateMaterialDropdown();
         }
     }
 
@@ -432,8 +458,6 @@ public class StudentUIHook : MonoBehaviour
             if (index >= 0)
             {
                 modelLoader.SetCurrentModel(index);
-                UpdateStats();
-                PopulateMaterialDropdown();
             }
         }
     }
@@ -450,14 +474,11 @@ public class StudentUIHook : MonoBehaviour
         materialDropdown.choices.Clear();
         materialDropdown.SetValueWithoutNotify("");
 
-        Debug.Log($"StudentUIHook: Found {currentMaterials.Count} materials for model.");
-
         for (int i = 0; i < currentMaterials.Count; i++)
         {
             string matName = currentMaterials[i].name;
             if (matName.EndsWith(" (Instance)")) matName = matName.Substring(0, matName.Length - 11);
-            materialDropdown.choices.Add(matName);
-            Debug.Log($"StudentUIHook: Added material choice -> {matName}");
+            materialDropdown.choices.Add($"{i + 1}. {matName}");
         }
 
         if (materialDropdown.choices.Count > 0)

@@ -1,47 +1,28 @@
-# Visor 3D Acadèmic
+# Visor 3D acadèmic
 
-Aquest projecte és una aplicació interactiva desenvolupada amb **Unity (URP)** pensada per automatitzar el procés de revisió tècnica i visualització de projectes 3D (malles) en entorns acadèmics. Permet carregar models directament al navegador i avaluar-ne el pressupost poligonal.
+Projecte Unity **6000.4.9f1 · URP · UI Toolkit** per inspeccionar models d'un escenari acadèmic.
 
-## Característiques Principals
+**Versió per a l'alumnat.** El projecte conté el visor i les eines de models; la correcció es fa en una eina docent separada. Per generar una entrega neta sense historial Git, executa `Tools/Export-StudentProject.ps1`; trobaràs el ZIP a `Deliveries`.
 
-1. **Drag & Drop a WebGL**: Els alumnes poden arrossegar els seus arxius `.glb` directament sobre la finestra del navegador (sense dependre d'estructures de carpetes locals gràcies a l'API del navegador Web).
-2. **Recompte Geomètric Dinàmic**: L'eina llegeix recursivament els `MeshFilter` del model carregat per extreure'n el nombre de vèrtexs i triangles.
-3. **Mètrica d'Avaluació Automàtica**: Incorpora un mòdul de regles (`Evaluator.cs`) que assigna una puntuació (de 0.0 a 3.0 pts) segons si el model respecta el límit o pressupost poligonal establert pel docent.
-4. **Doble Rol (Professor / Alumne)**: Disposa d'una interfície protegida per contrasenya (`AuthManager.cs`) que permet al docent amagar les dades d'avaluació fins a decidir publicar-les, així com configurar la rúbrica dinàmicament.
-5. **Vistes de Diagnòstic**: Permet alternar entre la renderització normal (*Lit*), albedo sense llums (*Unlit*), i malla de filferro (*Wireframe*), tot i que a URP requereix assignar els *shaders* adients manualment per via codi.
-6. **Integració amb Ollama**: Inclou un client HTTP asíncron capaç de connectar-se a una instància d'Ollama local (`http://localhost:11434`) per generar un informe qualitatiu basat en les dades analítiques extretes del model.
+Obre **Assets/Scenes/Viewer.unity** i prem **Play**. El desplegable **Model** del panell Model Viewer Pro mostra els objectes únics del catàleg i permet alternar lowpoly/highpoly.
 
-## Requisits del Sistema
+![Visor amb l'escut d'exemple](Docs/visor.png)
 
-- **Unity Editor**: Versió 2021 LTS, 2022 LTS o superior, amb el mòdul "WebGL Build Support" instal·lat.
-- **Render Pipeline**: Universal Render Pipeline (URP).
-- **Paquets Addicionals**: 
-  - `glTFast` (per llegir models .glb en *runtime*).
-  - `TextMeshPro` (per la interfície gràfica).
+- **Viewer.unity**: visor amb càmera orbital, materials, wireframe, UV i estadístiques.
+- **Escenari.unity**: escena independent on col·locar els prefabs. Inclou tres còpies de l'escut com a demostració de deduplicació.
+- **Escut.prefab**: arrel Escut amb fills Lowpoly i Highpoly, identificats amb Academic Model.
+- **StageCatalog.asset**: catàleg compartit. Actualitza'l amb **Visor 3D > Actualitzar catàleg des de l'escena activa**, des de l'escenari.
 
-## Com Configurar el Projecte a l'Escena
+Cada prefab apareix una sola vegada al visor encara que estigui repetit a l'escenari. Els materials d'inspecció són còpies temporals i no modifiquen els originals.
 
-Com que els *scripts* es troben desvinculats dels *GameObjects* en aquest repositori base, cal seguir aquests passos dins del Unity Editor:
+**Il·luminació:** el visor crea tres focus per defecte (principal, farciment i contorn). Des del bloc Llums de 3 punts pots moure'ls amb els controls d'angle, altura i distància, ajustar-ne intensitat i color, apagar-los individualment o restablir l'esquema inicial. La mateixa il·luminació s'utilitza al vídeo 360°.
 
-1. Obre la teva escena o crea'n una de nova.
-2. Crea un **GameObject buit** i anomena'l exactament **`ModelLoader`** (el plugin de Javascript el busca per aquest nom).
-3. Arrossega a dins de l'objecte `ModelLoader` els següents *scripts* (situats a `Assets/Scripts/`):
-   - `ModelLoader.cs`
-   - `PolygonCounter.cs`
-   - `Evaluator.cs`
-   - `RubricConfig.cs`
-   - `AuthManager.cs`
-   - `OllamaClient.cs`
-   - `DiagnosticView.cs`
-4. A la finestra *Inspector* de l'objecte `ModelLoader`, arrossega l'objecte mateix sobre tots els camps buits on demani els *scripts* (ex. on demana "Polygon Counter", arrossega el `ModelLoader` sencer, ja que els conté tots).
-5. Crea una interfície d'usuari a través d'un *Canvas* amb els menús per al Professor i per a l'Alumne, i enllaça'ls a l'`AuthManager.cs`.
+**Fons i HDRI:** fons negre, gris, clar i dos degradats. Inclou un HDRI d'estudi CC0 amb intensitat i rotació ajustables; pots utilitzar-lo per il·luminar i generar reflexos, i decidir independentment si es mostra com a fons. També s'aplica als vídeos 360°.
 
-## Compilació a WebGL
+Consulta **[GUIA_D_US.md](GUIA_D_US.md)** per importar models, preparar grups, muntar l'escenari, actualitzar el catàleg i resoldre problemes.
 
-Perquè el sistema de *Drag & Drop* funcioni:
-1. Vés a `File > Build Settings`.
-2. Canvia la plataforma a **WebGL**.
-3. Clica a **Build**. Un cop generat, vés a la carpeta i obre l'`index.html` en un navegador web local (pot ser que necessitis un petit servidor local com `python -m http.server` o l'extensió *Live Server* de VSCode per saltar-te les regles de CORS del navegador a l'hora de carregar fitxers).
+**Vídeo 360°:** en Play dins de Unity (Windows/macOS), el bloc Turnaround 360° permet exportar MP4 a 720p/1080p i 30 fps. Els vídeos es desen a Recordings, sense interfície ni àudio. Aquesta exportació encara no està disponible en aplicacions compilades.
 
-## Autor
-Codi base i documentació generats autònomament pel sistema d'IA Antigravity de Google DeepMind.
+Per comprovar el projecte: **Visor 3D > Validar projecte i proves de regressió**.
+
+Els models s'importen i es preparen a Unity. No hi ha càrrega de fitxers GLB per arrossegar-los al navegador en execució. SampleScene.unity es conserva com a referència de la versió original.

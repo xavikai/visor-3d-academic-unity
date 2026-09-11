@@ -23,3 +23,5 @@
 *.opendb
 *.VC.db
 .consulo/
+Recordings/
+Deliveries/

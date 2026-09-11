@@ -1,14 +1,14 @@
-using UnityEngine;
-using System.Collections;
+using System;
 using System.Collections.Generic;
+using UnityEngine;
 
+[DefaultExecutionOrder(-100)]
 public class ModelLoader : MonoBehaviour
 {
     public PolygonCounter polygonCounter;
-    
     public GameObject modelsContainer;
-
-    [System.Serializable]
+    public ModelCatalog catalog;
+    [Serializable]
     public class ModelEntry
     {
         public string name;
@@ -16,261 +16,154 @@ public class ModelLoader : MonoBehaviour
         public List<GameObject> highpolyParts = new List<GameObject>();
         public GameObject rootFolder;
     }
+    [HideInInspector] public List<ModelEntry> models = new List<ModelEntry>();
+    [HideInInspector] public MaterialViewer materialViewer;
+    public event Action ModelChanged;
+    public int CurrentModelIndex { get; private set; } = -1;
+    public bool IsHighpolyActive { get; private set; }
+    public bool HasBothVariants => CurrentModelIndex >= 0 &&
+        models[CurrentModelIndex].lowpolyParts.Count > 0 && models[CurrentModelIndex].highpolyParts.Count > 0;
+    public bool IsReady { get; private set; }
 
-    [HideInInspector]
-    public List<ModelEntry> models = new List<ModelEntry>();
-
-    [HideInInspector]
-    public MaterialViewer materialViewer;
-
-    private bool isHighpolyActive = false;
-    private int currentModelIndex = 0;
-
-    void Awake()
+    private void Awake()
     {
-        if (polygonCounter == null)
-        {
-            polygonCounter = GetComponent<PolygonCounter>();
-            if (polygonCounter == null) polygonCounter = gameObject.AddComponent<PolygonCounter>();
-        }
-
+        polygonCounter = GetComponent<PolygonCounter>() ?? gameObject.AddComponent<PolygonCounter>();
         if (modelsContainer == null)
         {
-            Transform t = transform.Find("ModelsContainer");
-            if (t != null) modelsContainer = t.gameObject;
+            var existing = transform.Find("ModelsContainer");
+            modelsContainer = existing != null ? existing.gameObject : new GameObject("ModelsContainer");
+            modelsContainer.transform.SetParent(transform, false);
         }
-
-        if (modelsContainer != null)
+        models.Clear();
+        if (catalog != null)
         {
-            Dictionary<string, ModelEntry> dict = new Dictionary<string, ModelEntry>();
-
+            // Preview copies are isolated from the stage and its shared materials.
+            foreach (Transform child in modelsContainer.transform) child.gameObject.SetActive(false);
+            var seen = new HashSet<AcademicModel>();
+            foreach (var prefab in catalog.prefabs)
+            {
+                if (prefab == null || !seen.Add(prefab)) continue;
+                if (!prefab.IsValid) { Debug.LogWarning($"Model invàlid al catàleg: {prefab.name}", prefab); continue; }
+                var copy = Instantiate(prefab, modelsContainer.transform, false);
+                copy.name = prefab.DisplayName;
+                copy.transform.localPosition = Vector3.zero;
+                copy.transform.localRotation = Quaternion.identity;
+                AddModel(copy);
+            }
+        }
+        else
+        {
             foreach (Transform child in modelsContainer.transform)
             {
-                string lowerName = child.name.ToLower();
-                bool hasKeyword = lowerName.Contains("low") || lowerName.Contains("high") || lowerName.Contains("baixa") || lowerName.Contains("alta");
-                
-                string baseName = child.name;
-                if (hasKeyword)
-                {
-                    // Netejar el sufix per trobar el nom base (ex: "escut_lowpoly" -> "escut")
-                    baseName = System.Text.RegularExpressions.Regex.Replace(baseName, @"(?i)[_\-\s]*(low|high|baixa|alta)(poly)?.*$", "");
-                }
-                
-                if (string.IsNullOrEmpty(baseName)) baseName = "Model";
-
-                if (!dict.ContainsKey(baseName))
-                {
-                    dict[baseName] = new ModelEntry();
-                    dict[baseName].name = baseName;
-                    dict[baseName].rootFolder = null;
-                }
-
-                ModelEntry entry = dict[baseName];
-
-                if (hasKeyword)
-                {
-                    if (lowerName.Contains("high") || lowerName.Contains("alta"))
-                        entry.highpolyParts.Add(child.gameObject);
-                    else
-                        entry.lowpolyParts.Add(child.gameObject);
-                }
+                var model = child.GetComponent<AcademicModel>();
+                if (model != null && model.IsValid) AddModel(model);
                 else
                 {
-                    // Comprovar si actua com una carpeta (té fills i algun fill té la paraula clau)
-                    bool childHasKeyword = false;
-                    foreach (Transform sub in child)
-                    {
-                        string subL = sub.name.ToLower();
-                        if (subL.Contains("low") || subL.Contains("high") || subL.Contains("baixa") || subL.Contains("alta"))
-                        {
-                            childHasKeyword = true;
-                            break;
-                        }
-                    }
-
-                    if (child.childCount > 0 && childHasKeyword)
-                    {
-                        entry.rootFolder = child.gameObject;
-                        foreach (Transform subChild in child)
-                        {
-                            string subL = subChild.name.ToLower();
-                            if (subL.Contains("high") || subL.Contains("alta")) 
-                                entry.highpolyParts.Add(subChild.gameObject);
-                            else if (subL.Contains("low") || subL.Contains("baixa")) 
-                                entry.lowpolyParts.Add(subChild.gameObject);
-                        }
-                        
-                        // Assignar peces orfes dins la carpeta
-                        foreach (Transform subChild in child)
-                        {
-                            if (!entry.highpolyParts.Contains(subChild.gameObject) && !entry.lowpolyParts.Contains(subChild.gameObject))
-                            {
-                                if (entry.lowpolyParts.Count > 0 && entry.highpolyParts.Count == 0)
-                                    entry.highpolyParts.Add(subChild.gameObject);
-                                else if (entry.highpolyParts.Count > 0 && entry.lowpolyParts.Count == 0)
-                                    entry.lowpolyParts.Add(subChild.gameObject);
-                                else if (entry.lowpolyParts.Count == 0)
-                                    entry.lowpolyParts.Add(subChild.gameObject);
-                                else
-                                    entry.highpolyParts.Add(subChild.gameObject);
-                            }
-                        }
-                    }
-                    else
-                    {
-                        // És un model normal sense nom especial, l'assumim com a lowpoly per defecte
-                        entry.lowpolyParts.Add(child.gameObject);
-                    }
+                    // Explicit folders also work without a catalog/component.
+                    var entry = new ModelEntry { name = child.name, rootFolder = child.gameObject };
+                    var low = child.Find("Lowpoly");
+                    var high = child.Find("Highpoly");
+                    if (low != null) entry.lowpolyParts.Add(low.gameObject);
+                    if (high != null) entry.highpolyParts.Add(high.gameObject);
+                    if (low == null && high == null) entry.lowpolyParts.Add(child.gameObject);
+                    models.Add(entry);
                 }
             }
-
-            models = new List<ModelEntry>(dict.Values);
         }
-    }
-
-    void Start()
-    {
-        materialViewer = gameObject.AddComponent<MaterialViewer>();
-        
-        SetHighpolyActive(false);
-
-        StartCoroutine(DelayedInit());
-    }
-
-    private IEnumerator DelayedInit()
-    {
-        yield return new WaitForEndOfFrame();
-        
-        if (materialViewer != null)
+        models.Sort((a, b) => StringComparer.OrdinalIgnoreCase.Compare(a.name, b.name));
+        var labels = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var entry in models)
         {
-            materialViewer.Initialize();
+            string label = entry.name;
+            int suffix = 2;
+            while (!labels.Add(entry.name)) entry.name = label + " (" + suffix++ + ")";
+            entry.rootFolder.SetActive(false);
         }
-
-        UpdateActiveModels();
-        AutoFitModel();
     }
 
-    public void SetHighpolyActive(bool active)
+    private void AddModel(AcademicModel model)
     {
-        isHighpolyActive = active;
+        var entry = new ModelEntry { name = model.DisplayName, rootFolder = model.gameObject };
+        if (model.lowpoly != null) entry.lowpolyParts.Add(model.lowpoly);
+        if (model.highpoly != null) entry.highpolyParts.Add(model.highpoly);
+        models.Add(entry);
+    }
 
-        // Mantenim els contenidors actius i apaguem/encenem els fills per separat
-        if (modelsContainer != null) modelsContainer.SetActive(true);
-
-        UpdateActiveModels();
+    private void Start()
+    {
+        var environment = GetComponent<ViewerEnvironment>() ?? gameObject.AddComponent<ViewerEnvironment>();
+        environment.Initialize();
+        var studio = GetComponent<StudioLighting>() ?? gameObject.AddComponent<StudioLighting>();
+        studio.Initialize(this);
+        materialViewer = GetComponent<MaterialViewer>() ?? gameObject.AddComponent<MaterialViewer>();
+        materialViewer.Initialize();
+        IsReady = true;
+        if (models.Count > 0) SetCurrentModel(0);
+        else ModelChanged?.Invoke();
     }
 
     public void SetCurrentModel(int index)
     {
-        currentModelIndex = index;
+        if (index < 0 || index >= models.Count) return;
+        CurrentModelIndex = index;
         UpdateActiveModels();
-        AutoFitModel();
     }
+
+    public void SetHighpolyActive(bool active) { IsHighpolyActive = active; UpdateActiveModels(); }
+    public void ToggleHighpoly(bool state) => SetHighpolyActive(state);
+    public void ToggleLowpoly(bool state) => SetHighpolyActive(!state);
 
     private void UpdateActiveModels()
     {
-        // Apagar-ho tot
         foreach (var entry in models)
         {
-            if (entry.rootFolder != null) entry.rootFolder.SetActive(false);
-            foreach (var p in entry.lowpolyParts) if (p != null) p.SetActive(false);
-            foreach (var p in entry.highpolyParts) if (p != null) p.SetActive(false);
+            foreach (var part in entry.lowpolyParts) part.SetActive(false);
+            foreach (var part in entry.highpolyParts) part.SetActive(false);
+            entry.rootFolder.SetActive(false);
         }
-
-        // Encendre el model actual en la versió corresponent
-        if (currentModelIndex >= 0 && currentModelIndex < models.Count)
+        if (CurrentModelIndex >= 0)
         {
-            ModelEntry current = models[currentModelIndex];
-            if (current.rootFolder != null) current.rootFolder.SetActive(true);
-
-            if (isHighpolyActive)
-            {
-                foreach (var p in current.highpolyParts) if (p != null) p.SetActive(true);
-            }
-            else
-            {
-                foreach (var p in current.lowpolyParts) if (p != null) p.SetActive(true);
-            }
+            var entry = models[CurrentModelIndex];
+            if (entry.highpolyParts.Count == 0) IsHighpolyActive = false;
+            else if (entry.lowpolyParts.Count == 0) IsHighpolyActive = true;
+            entry.rootFolder.SetActive(true);
+            foreach (var part in IsHighpolyActive ? entry.highpolyParts : entry.lowpolyParts) part.SetActive(true);
         }
-
-        UpdatePolygonCounter();
-    }
-    
-    // Per enllaçar amb el botó o Toggle
-    public void ToggleHighpoly(bool state)
-    {
-        SetHighpolyActive(state);
-    }
-    
-    public void ToggleLowpoly(bool state)
-    {
-        SetHighpolyActive(!state);
-    }
-
-    private void UpdatePolygonCounter()
-    {
-        if (polygonCounter != null)
-        {
-            GameObject target = GetActiveModel();
-            if (target == null) target = gameObject;
-            polygonCounter.SetModel(target);
-        }
+        polygonCounter.SetModel(GetActiveModel());
+        AutoFitModel();
+        ModelChanged?.Invoke();
     }
 
     public GameObject GetActiveModel()
     {
-        if (currentModelIndex >= 0 && currentModelIndex < models.Count)
-        {
-            ModelEntry current = models[currentModelIndex];
-            if (current.rootFolder != null) return current.rootFolder;
-            
-            // Fallback: retornar una de les peces actives perquè els scripts puguin trobar la malla o materials
-            if (isHighpolyActive && current.highpolyParts.Count > 0)
-                return current.highpolyParts[0];
-            else if (!isHighpolyActive && current.lowpolyParts.Count > 0)
-                return current.lowpolyParts[0];
-            else if (current.lowpolyParts.Count > 0)
-                return current.lowpolyParts[0]; // Últim recurs
-        }
-        return null;
+        if (CurrentModelIndex < 0 || CurrentModelIndex >= models.Count) return null;
+        var entry = models[CurrentModelIndex];
+        var parts = IsHighpolyActive ? entry.highpolyParts : entry.lowpolyParts;
+        return parts.Count == 1 ? parts[0] : entry.rootFolder;
     }
 
-    private void AutoFitModel()
+    public void AutoFitModel()
     {
-        // Només volem ajustar la càmera a l'objecte ACTIU actual, no a tots
-        Renderer[] renderers = GetComponentsInChildren<Renderer>(false); // Només els actius
-        if (renderers.Length == 0) return;
-
-        Bounds bounds = renderers[0].bounds;
-        foreach (Renderer r in renderers)
+        var active = GetActiveModel();
+        var camera = Camera.main;
+        if (active == null || camera == null) return;
+        Bounds bounds = default;
+        bool found = false;
+        foreach (var renderer in active.GetComponentsInChildren<Renderer>())
         {
-            if (r.gameObject.activeInHierarchy && r.name != "WireframeOverlay" && !r.name.EndsWith("_UVLayout"))
-                bounds.Encapsulate(r.bounds);
+            if (!renderer.enabled || renderer.name == "WireframeOverlay") continue;
+            if (!found) bounds = renderer.bounds;
+            else bounds.Encapsulate(renderer.bounds);
+            found = true;
         }
-
-        // Calculem l'offset necessari per moure només els contenidors globals perquè el centre ACTIU sigui 0,0,0
-        // Wait, si movem els contenidors globals per cada model, es pot desquadrar tot.
-        // Millor demanar a la càmera que orbiti al voltant del nou centre!
-        Vector3 currentCenter = bounds.center;
-        
-        // Calculem quina hauria de ser la distància de la càmera segons la mida de l'objecte
-        float maxDimension = Mathf.Max(bounds.size.x, bounds.size.y, bounds.size.z);
-        float requiredDistance = maxDimension * 1.5f; 
-        
-        if (requiredDistance < 1f) requiredDistance = 1f;
-
-        // Actualitzem l'OrbitCamera per mirar al centre de l'objecte actual
-        OrbitCamera cam = Camera.main != null ? Camera.main.GetComponent<OrbitCamera>() : null;
-        if (cam != null)
-        {
-            // Update OrbitCamera to support targeting a specific world point instead of a transform, or just use the center
-            // Since OrbitCamera targets modelLoaderObj.transform, we can just move modelLoaderObj so the center is 0,0,0
-            Vector3 offset = -bounds.center + transform.position;
-            if (modelsContainer != null) modelsContainer.transform.position += offset;
-
-            cam.ResetView(requiredDistance);
-        }
-        
-        Debug.Log($"Model auto-centrat. Mida màxima: {maxDimension}, Distància ajustada a: {requiredDistance}");
+        if (!found) return;
+        float radius = Mathf.Max(bounds.extents.magnitude, 0.01f);
+        float vertical = camera.fieldOfView * Mathf.Deg2Rad / 2;
+        float horizontal = Mathf.Atan(Mathf.Tan(vertical) * camera.aspect);
+        float distance = radius / Mathf.Sin(Mathf.Min(vertical, horizontal)) * 1.2f;
+        camera.nearClipPlane = Mathf.Max(0.001f, distance / 1000f);
+        camera.farClipPlane = Mathf.Max(100f, distance + radius * 4);
+        var orbit = camera.GetComponent<OrbitCamera>();
+        if (orbit != null) orbit.Focus(bounds.center, distance);
     }
 }

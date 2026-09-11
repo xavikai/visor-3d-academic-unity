@@ -47,8 +47,14 @@ public class MaterialViewer : MonoBehaviour
     private Material checkerboardMaterial;
     private bool isUvMode = false;
     
+    private bool initialized;
+    private readonly List<Mesh> generatedMeshes = new List<Mesh>();
+    private Texture2D checkerTexture;
+
     public void Initialize()
     {
+        if (initialized) return;
+        initialized = true;
         originalData.Clear();
         allMaterials.Clear();
         originalMaterials.Clear();
@@ -63,7 +69,8 @@ public class MaterialViewer : MonoBehaviour
         if (wireframeMaterial != null) wireframeMaterial.color = Color.cyan;
 
         checkerboardMaterial = new Material(Shader.Find("Universal Render Pipeline/Lit"));
-        checkerboardMaterial.SetTexture("_BaseMap", CreateCheckerboardTexture());
+        checkerTexture = CreateCheckerboardTexture();
+        checkerboardMaterial.SetTexture("_BaseMap", checkerTexture);
 
         
 
@@ -78,6 +85,7 @@ public class MaterialViewer : MonoBehaviour
         Renderer[] renderers = GetComponentsInChildren<Renderer>(true);
         foreach (Renderer r in renderers)
         {
+            if (r.name == "WireframeOverlay") continue;
             Material[] shared = r.sharedMaterials;
             Material[] instanced = new Material[shared.Length];
 
@@ -111,6 +119,9 @@ public class MaterialViewer : MonoBehaviour
                     if (clone.HasProperty("_OcclusionMap")) data.occlusionMap = clone.GetTexture("_OcclusionMap");
                     if (clone.HasProperty("_ParallaxMap")) data.parallaxMap = clone.GetTexture("_ParallaxMap");
 
+                    if (clone.HasProperty("_BumpScale")) data.bumpScale = clone.GetFloat("_BumpScale");
+                    if (clone.HasProperty("_OcclusionStrength")) data.occlusionStrength = clone.GetFloat("_OcclusionStrength");
+                    if (clone.HasProperty("_Parallax")) data.parallaxScale = clone.GetFloat("_Parallax");
                     // UI States
                     data.metallicSlider = data.metallic;
                     data.smoothnessSlider = data.smoothness;
@@ -135,11 +146,12 @@ public class MaterialViewer : MonoBehaviour
             if (mf.gameObject.name == "WireframeOverlay" || mf.gameObject.name.EndsWith("_UVLayout") || mf.sharedMesh == null) continue;
 
             Mesh original = mf.sharedMesh;
+            if (!original.isReadable) continue;
             Mesh wireMesh = new Mesh();
             wireMesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
             wireMesh.vertices = original.vertices;
             
-            int[] triangles = original.triangles;
+            int[] triangles = TriangleIndices(original);
             int[] lines = new int[triangles.Length * 2];
             int lineIndex = 0;
             for (int i = 0; i < triangles.Length; i += 3)
@@ -152,6 +164,7 @@ public class MaterialViewer : MonoBehaviour
                 lines[lineIndex++] = triangles[i];
             }
             wireMesh.SetIndices(lines, MeshTopology.Lines, 0);
+            generatedMeshes.Add(wireMesh);
 
             GameObject wireObj = new GameObject("WireframeOverlay");
             wireObj.transform.SetParent(mf.transform, false);
@@ -174,10 +187,8 @@ public class MaterialViewer : MonoBehaviour
 
     public void ToggleAlbedo(bool state)
     {
-        Debug.Log($"ToggleAlbedo called with state={state}. activeMaterial is null? {activeMaterial == null}");
         if (activeMaterial == null || !originalData.ContainsKey(activeMaterial)) 
         {
-            Debug.Log("ToggleAlbedo aborting because activeMaterial is null or not in originalData.");
             return;
         }
 
@@ -185,17 +196,14 @@ public class MaterialViewer : MonoBehaviour
         
         if (activeMaterial.HasProperty("_BaseMap"))
         {
-            Debug.Log("ToggleAlbedo setting _BaseMap");
             activeMaterial.SetTexture("_BaseMap", state ? originalData[activeMaterial].baseMap : null);
         }
         else if (activeMaterial.HasProperty("_MainTex"))
         {
-            Debug.Log("ToggleAlbedo setting _MainTex");
             activeMaterial.SetTexture("_MainTex", state ? originalData[activeMaterial].baseMap : null);
         }
         else
         {
-            Debug.Log("ToggleAlbedo material has no _BaseMap or _MainTex!");
         }
     }
 
@@ -329,7 +337,8 @@ public class MaterialViewer : MonoBehaviour
 
     public void SetActiveMaterial(Material mat)
     {
-        if (mat != null && originalData.ContainsKey(mat))
+        if (mat == null) { activeMaterial = null; return; }
+        if (originalData.ContainsKey(mat))
         {
             activeMaterial = mat;
         }
@@ -343,7 +352,8 @@ public class MaterialViewer : MonoBehaviour
             Renderer[] renderers = activeModel.GetComponentsInChildren<Renderer>(false);
             foreach (Renderer r in renderers)
             {
-                foreach (Material m in r.sharedMaterials)
+                if (!originalMaterials.TryGetValue(r, out var materials)) continue;
+                foreach (Material m in materials)
                 {
                     if (m != null && !list.Contains(m) && originalData.ContainsKey(m))
                     {
@@ -357,11 +367,22 @@ public class MaterialViewer : MonoBehaviour
 
     public OriginalMaterialData GetActiveMaterialData(GameObject activeModel)
     {
-        if (activeMaterial != null && originalData.ContainsKey(activeMaterial))
-            return originalData[activeMaterial];
-        return GetFirstMaterialData();
+        var materials = GetMaterialsForModel(activeModel);
+        if (activeMaterial != null && materials.Contains(activeMaterial)) return originalData[activeMaterial];
+        activeMaterial = materials.Count > 0 ? materials[0] : null;
+        return activeMaterial != null ? originalData[activeMaterial] : null;
     }
 
+    private void OnDestroy()
+    {
+        foreach (var material in allMaterials) if (material != null) Destroy(material);
+        foreach (var texture in modelUVs.Values) if (texture != null) Destroy(texture);
+        foreach (var mesh in generatedMeshes) if (mesh != null) Destroy(mesh);
+        if (wireframeMaterial != null) Destroy(wireframeMaterial);
+        if (checkerboardMaterial != null) Destroy(checkerboardMaterial);
+        if (vertexColorMaterial != null) Destroy(vertexColorMaterial);
+        if (checkerTexture != null) Destroy(checkerTexture);
+    }
     public void ToggleWireframe(bool state)
     {
         foreach (var w in wireframeObjects)
@@ -447,7 +468,7 @@ public class MaterialViewer : MonoBehaviour
         MeshFilter[] filters = activeModel.GetComponentsInChildren<MeshFilter>(false);
         foreach(var mf in filters)
         {
-            if (mf.sharedMesh != null) DrawMeshUVs(pixels, mf.sharedMesh, lineColor, size);
+            if (mf.name != "WireframeOverlay" && mf.sharedMesh != null) DrawMeshUVs(pixels, mf.sharedMesh, lineColor, size);
         }
 
         SkinnedMeshRenderer[] smrs = activeModel.GetComponentsInChildren<SkinnedMeshRenderer>(false);
@@ -462,14 +483,23 @@ public class MaterialViewer : MonoBehaviour
         return tex;
     }
 
+    private static int[] TriangleIndices(Mesh mesh)
+    {
+        var indices = new List<int>();
+        for (int sub = 0; sub < mesh.subMeshCount; sub++)
+            if (mesh.GetTopology(sub) == MeshTopology.Triangles) indices.AddRange(mesh.GetTriangles(sub));
+        return indices.ToArray();
+    }
     private void DrawMeshUVs(Color32[] pixels, Mesh mesh, Color32 col, int size)
     {
+        if (!mesh.isReadable) return;
         Vector2[] uvs = mesh.uv;
-        int[] tris = mesh.triangles;
+        int[] tris = TriangleIndices(mesh);
         if (uvs == null || uvs.Length == 0 || tris == null || tris.Length == 0) return;
 
         for (int i = 0; i < tris.Length; i += 3)
         {
+            if (tris[i] >= uvs.Length || tris[i + 1] >= uvs.Length || tris[i + 2] >= uvs.Length) continue;
             DrawLine(pixels, uvs[tris[i]], uvs[tris[i + 1]], col, size);
             DrawLine(pixels, uvs[tris[i + 1]], uvs[tris[i + 2]], col, size);
             DrawLine(pixels, uvs[tris[i + 2]], uvs[tris[i]], col, size);
@@ -478,10 +508,13 @@ public class MaterialViewer : MonoBehaviour
 
     private void DrawLine(Color32[] pixels, Vector2 p1, Vector2 p2, Color32 col, int size)
     {
-        int x0 = (int)(p1.x * size);
-        int y0 = (int)(p1.y * size);
-        int x1 = (int)(p2.x * size);
-        int y1 = (int)(p2.y * size);
+        if (float.IsNaN(p1.x) || float.IsNaN(p1.y) || float.IsNaN(p2.x) || float.IsNaN(p2.y)) return;
+        p1 = Vector2.Min(Vector2.one, Vector2.Max(Vector2.zero, p1));
+        p2 = Vector2.Min(Vector2.one, Vector2.Max(Vector2.zero, p2));
+        int x0 = (int)(p1.x * (size - 1));
+        int y0 = (int)(p1.y * (size - 1));
+        int x1 = (int)(p2.x * (size - 1));
+        int y1 = (int)(p2.y * (size - 1));
 
         int dx = Mathf.Abs(x1 - x0);
         int dy = Mathf.Abs(y1 - y0);
